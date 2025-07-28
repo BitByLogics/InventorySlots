@@ -10,7 +10,7 @@
 [![Stars](https://img.shields.io/github/stars/BitByLogics/InventorySlots)](https://github.com/BitByLogics/InventorySlots/stargazers)
 
 <a href="#"><img src="https://raw.githubusercontent.com/intergrav/devins-badges/v2/assets/compact/supported/fabric_46h.png" height="35"></a>
-<a href="#"><img src="https://raw.githubusercontent.com/intergrav/devins-badges/v2/assets/compact/available/modrinth_vector.svg" height="35"></a>
+<a href="#"><img src="https://raw.githubusercontent.com/intergrav/devins-badges/v2/assets/compact/available/modrinth_vector.svg" height="37"></a>
 
 </div>
 
