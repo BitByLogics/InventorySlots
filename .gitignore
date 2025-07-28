@@ -1,0 +1,42 @@
+# Gradle build files
+.gradle/
+build/
+
+# Fabric API generated files
+fabric.mod.json
+fabric.mod.json.lock
+
+# IntelliJ IDEA
+.idea/
+*.iml
+out/
+
+# Eclipse
+.project
+.classpath
+.settings/
+
+# VS Code
+.vscode/
+
+# MacOS
+.DS_Store
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Java class files
+*.class
+
+# Others
+bin/
+
+# Minecraft launcher profiles
+launcher_profiles.json
+
+# Minecraft Stuff
+run/
