@@ -14,8 +14,6 @@
 
 </div>
 
----
-
 ## ✨ Features
 
 - Toggle inventory slot overlays client-side
@@ -23,6 +21,43 @@
 - In-game config GUI
 - Real-time preview and hotkey toggles
 - Persistent config saved between sessions
+
+---
+
+## 📷 Preview
+
+<div align="center">
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="https://i.imgur.com/E3LJtgy.png" height="180" /><br>
+      <em>Double Chest Slots</em>
+    </td>
+    <td align="center">
+      <img src="https://i.imgur.com/AHIk2zc.png" height="180" /><br>
+      <em>Anvil Slots</em>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://i.imgur.com/YMHXdrq.png" height="180" /><br>
+      <em>Brewing Stand Slots</em>
+    </td>
+    <td align="center">
+      <img src="https://i.imgur.com/rE5V1rF.png" height="180" /><br>
+      <em>Enchanting Table Slots</em>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2">
+      <img src="https://i.imgur.com/3qoqJcX.png" height="320" /><br>
+      <em>Configuration screen with live preview</em>
+    </td>
+  </tr>
+</table>
+
+</div>
 
 ---
 
