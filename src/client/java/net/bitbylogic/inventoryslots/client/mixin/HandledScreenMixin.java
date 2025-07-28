@@ -64,7 +64,7 @@ public abstract class HandledScreenMixin<T extends ScreenHandler> extends Screen
             float offsetY = Config.INSTANCE.textAnchor.getOffsetY(textHeight, 16);
 
             matrices.push();
-            matrices.translate(slotX + offsetX, slotY + offsetY, 0);
+            matrices.translate(slotX + offsetX, slotY + offsetY, 300);
             matrices.scale(scale, scale, 1);
 
             if (Config.INSTANCE.textShadow) {
