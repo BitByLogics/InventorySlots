@@ -33,6 +33,7 @@ public class InventorySlotsClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (TOGGLE_SLOTS.wasPressed()) {
                 Config.INSTANCE.enabled = !Config.INSTANCE.enabled;
+                Config.INSTANCE.save();
 
                 MutableText message = Text.literal("Slots")
                         .formatted(Formatting.GRAY)
