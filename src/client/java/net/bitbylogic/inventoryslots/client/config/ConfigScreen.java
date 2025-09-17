@@ -8,6 +8,7 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.SliderWidget;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import org.joml.Matrix3x2fStack;
 
 public class ConfigScreen extends Screen {
 
@@ -164,7 +165,6 @@ public class ConfigScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        renderBackground(context, mouseX, mouseY, delta);
         super.render(context, mouseX, mouseY, delta);
 
         context.drawCenteredTextWithShadow(textRenderer, title, width / 2, 20, 0xFFFFFF);
@@ -199,20 +199,22 @@ public class ConfigScreen extends Screen {
                 float textDrawX = Config.INSTANCE.textAnchor.getOffsetX(scaledTextWidth, slotContentSize);
                 float textDrawY = Config.INSTANCE.textAnchor.getOffsetY(scaledTextHeight, slotContentSize);
 
-                context.getMatrices().push();
-                context.getMatrices().translate(slotX + 1 + textDrawX, slotY + 1 + textDrawY, 0);
-                context.getMatrices().scale(Config.INSTANCE.textScale, Config.INSTANCE.textScale, 1);
+                Matrix3x2fStack matrices = context.getMatrices();
+
+                matrices.pushMatrix();
+                matrices.translate(slotX + 1 + textDrawX, slotY + 1 + textDrawY);
+                matrices.scale(Config.INSTANCE.textScale, Config.INSTANCE.textScale);
 
                 if (Config.INSTANCE.textShadow) {
                     context.drawTextWithShadow(textRenderer, previewText, 0, 0, Config.INSTANCE.textColor);
 
-                    context.getMatrices().pop();
+                    matrices.popMatrix();
                     continue;
                 }
 
                 context.drawText(textRenderer, previewText, 0, 0, Config.INSTANCE.textColor, false);
 
-                context.getMatrices().pop();
+                matrices.popMatrix();
             }
         }
     }

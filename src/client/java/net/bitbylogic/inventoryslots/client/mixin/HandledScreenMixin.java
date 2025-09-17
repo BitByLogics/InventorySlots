@@ -7,9 +7,9 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
+import org.joml.Matrix3x2fStack;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -44,7 +44,7 @@ public abstract class HandledScreenMixin<T extends ScreenHandler> extends Screen
         List<Slot> slots = handler.slots;
         float scale = Config.INSTANCE.textScale;
 
-        MatrixStack matrices = context.getMatrices();
+        Matrix3x2fStack matrices = context.getMatrices();
 
         for (int i = 0; i < slots.size(); i++) {
             Slot slot = slots.get(i);
@@ -63,9 +63,9 @@ public abstract class HandledScreenMixin<T extends ScreenHandler> extends Screen
             float offsetX = Config.INSTANCE.textAnchor.getOffsetX(textWidth, 16);
             float offsetY = Config.INSTANCE.textAnchor.getOffsetY(textHeight, 16);
 
-            matrices.push();
-            matrices.translate(slotX + offsetX, slotY + offsetY, 300);
-            matrices.scale(scale, scale, 1);
+            matrices.pushMatrix();
+            matrices.translate(slotX + offsetX, slotY + offsetY);
+            matrices.scale(scale, scale);
 
             if (Config.INSTANCE.textShadow) {
                 context.drawTextWithShadow(
@@ -76,7 +76,7 @@ public abstract class HandledScreenMixin<T extends ScreenHandler> extends Screen
                         Config.INSTANCE.textColor
                 );
 
-                matrices.pop();
+                matrices.popMatrix();
 
                 continue;
             }
@@ -90,7 +90,7 @@ public abstract class HandledScreenMixin<T extends ScreenHandler> extends Screen
                     false
             );
 
-            matrices.pop();
+            matrices.popMatrix();
         }
     }
 

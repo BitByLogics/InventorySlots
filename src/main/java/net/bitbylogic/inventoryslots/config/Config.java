@@ -17,25 +17,25 @@ public class Config {
     public boolean enabled = false;
 
     public float textScale = 0.5f;
-    public int textColor = 0xFFFFFF;
+    public int textColor = 0xFFFFFFFF;
 
     public TextAnchor textAnchor = TextAnchor.TOP_LEFT;
 
     public boolean textShadow = true;
 
     public static final int[] COLOR_PALETTE = {
-            0xFFFFFF, // White
-            0xFF0000, // Red
-            0x00FF00, // Green
-            0x0000FF, // Blue
-            0xFFFF00, // Yellow
-            0xFF00FF, // Magenta
-            0x00FFFF, // Cyan
-            0xFFA500, // Orange
-            0x800080, // Purple
+            0xFFFFFFFF, // White
+            0xFFFF0000, // Red
+            0xFF00FF00, // Green
+            0xFF0000FF, // Blue
+            0xFFFFFF00, // Yellow
+            0xFFFF00FF, // Magenta
+            0xFF00FFFF, // Cyan
+            0xFFFFA500, // Orange
+            0xFF800080, // Purple
             0xFFFF69B4, // Pink
-            0x808080, // Gray
-            0x000000  // Black
+            0xFF808080, // Gray
+            0xFF000000  // Black
     };
 
     public static final String[] COLOR_NAMES = {
@@ -148,6 +148,7 @@ public class Config {
 
                     if (json.has("textColor")) {
                         textColor = json.get("textColor").getAsInt();
+                        textColor = 0xFF000000 | textColor;
                     }
 
                     if (json.has("textAnchor")) {
