@@ -12,12 +12,17 @@ import org.joml.Matrix3x2fStack;
 
 public class ConfigScreen extends Screen {
 
+    private static final Text ON_TEXT = Text.literal("ON").formatted(Formatting.GREEN);
+    private static final Text OFF_TEXT = Text.literal("OFF").formatted(Formatting.RED);
+
     private final Screen parent;
 
-    private SliderWidget scaleSlider;
     private ButtonWidget anchorButton;
     private ButtonWidget colorButton;
     private ButtonWidget shadowButton;
+    private ButtonWidget hotbarButton;
+    private ButtonWidget hotbarOnlyButton;
+    private SliderWidget scaleSlider;
 
     private int anchorIndex;
     private int colorIndex = 0;
@@ -39,26 +44,51 @@ public class ConfigScreen extends Screen {
 
     @Override
     protected void init() {
-        super.init();
+        int optionWidth = 180;
+        int optionHeight = 20;
 
-        int contentWidth = Math.min(300, width - 40);
-        int contentX = (width - contentWidth) / 2;
+        int leftX = ((width - 5) >>> 1) - optionWidth;
+        int rightX = (width + 5) >>> 1;
 
-        int buttonHeight = 20;
-        int spacing = 8;
+        int y = 40;
 
-        int controlBlockHeight = buttonHeight * 4 + spacing * 3;
-        int previewHeight = 2 * 18 + spacing;
+        anchorButton = ButtonWidget.builder(
+                Text.literal("Anchor: " + Config.INSTANCE.textAnchor.getDisplayName()),
+                (button) -> {
+                    anchorIndex = (anchorIndex + 1) % Config.TextAnchor.values().length;
+                    Config.INSTANCE.textAnchor = Config.TextAnchor.values()[anchorIndex];
 
-        int topMargin = 60;
-        int availableHeight = height - topMargin - 30;
-        int centerY = topMargin + (availableHeight / 2);
-        int startY = centerY - (controlBlockHeight + spacing + 10 + previewHeight) / 2;
+                    button.setMessage(Text.literal("Anchor: " + Config.INSTANCE.textAnchor.getDisplayName()));
+                }).dimensions(leftX, y, optionWidth, optionHeight).build();
+        addDrawableChild(anchorButton);
 
-        scaleSlider = new SliderWidget(contentX, startY, contentWidth, buttonHeight,
+        colorButton = ButtonWidget.builder(
+                Text.literal("Color: " + Config.INSTANCE.getColorName()),
+                (button) -> {
+                    colorIndex = (colorIndex + 1) % Config.COLOR_PALETTE.length;
+                    Config.INSTANCE.textColor = Config.COLOR_PALETTE[colorIndex];
+
+                    button.setMessage(Text.literal("Color: " + Config.INSTANCE.getColorName()));
+                }).dimensions(rightX, y, optionWidth, optionHeight).build();
+        addDrawableChild(colorButton);
+        y += 25;
+
+        shadowButton = ButtonWidget.builder(
+                Text.literal("Shadow: ").append(Config.INSTANCE.textShadow ? ON_TEXT : OFF_TEXT),
+                (button) -> {
+                    Config.INSTANCE.textShadow = !Config.INSTANCE.textShadow;
+
+                    boolean shadowEnabled = Config.INSTANCE.textShadow;
+
+                    shadowButton.setMessage(Text.literal("Shadow: ")
+                            .append(shadowEnabled ? ON_TEXT : OFF_TEXT));
+                }).dimensions(leftX, y, optionWidth, optionHeight).build();
+        addDrawableChild(shadowButton);
+
+        scaleSlider = new SliderWidget(rightX, y, optionWidth, optionHeight,
                 Text.literal("Scale: " + String.format("%.2f", Config.INSTANCE.textScale)),
                 (Config.INSTANCE.textScale - 0.1) / 0.9) {
-            
+
             @Override
             protected void updateMessage() {
                 double value = 0.1 + (this.value * 0.9);
@@ -71,44 +101,39 @@ public class ConfigScreen extends Screen {
             protected void applyValue() {}
         };
         addDrawableChild(scaleSlider);
+        y += 25;
 
-        anchorButton = ButtonWidget.builder(
-                Text.literal("Anchor: " + Config.INSTANCE.textAnchor.getDisplayName()),
+        hotbarButton = ButtonWidget.builder(
+                Text.literal("Hotbar Numbers: ").append(Config.INSTANCE.hotbarNumbers ? ON_TEXT : OFF_TEXT),
                 (button) -> {
-                    anchorIndex = (anchorIndex + 1) % Config.TextAnchor.values().length;
-                    Config.INSTANCE.textAnchor = Config.TextAnchor.values()[anchorIndex];
+                    Config.INSTANCE.hotbarNumbers = !Config.INSTANCE.hotbarNumbers;
 
-                    button.setMessage(Text.literal("Anchor: " + Config.INSTANCE.textAnchor.getDisplayName()));
-                }).dimensions(contentX, startY + (buttonHeight + spacing), contentWidth, buttonHeight).build();
-        addDrawableChild(anchorButton);
+                    boolean hotbarNumbers = Config.INSTANCE.hotbarNumbers;
 
-        colorButton = ButtonWidget.builder(
-                Text.literal("Color: " + Config.INSTANCE.getColorName()),
+                    hotbarButton.setMessage(Text.literal("Hotbar Numbers: ")
+                            .append(hotbarNumbers ? ON_TEXT : OFF_TEXT));
+                }).dimensions(leftX, y, optionWidth, optionHeight).build();
+        addDrawableChild(hotbarButton);
+
+        hotbarOnlyButton = ButtonWidget.builder(
+                Text.literal("Hotbar Only: ").append(Config.INSTANCE.hotbarOnly ? ON_TEXT : OFF_TEXT),
                 (button) -> {
-                    colorIndex = (colorIndex + 1) % Config.COLOR_PALETTE.length;
-                    Config.INSTANCE.textColor = Config.COLOR_PALETTE[colorIndex];
+                    Config.INSTANCE.hotbarOnly = !Config.INSTANCE.hotbarOnly;
 
-                    button.setMessage(Text.literal("Color: " + Config.INSTANCE.getColorName()));
-                }).dimensions(contentX, startY + (buttonHeight + spacing) * 2, contentWidth, buttonHeight).build();
-        addDrawableChild(colorButton);
+                    boolean hotbarOnly = Config.INSTANCE.hotbarOnly;
 
-        shadowButton = ButtonWidget.builder(
-                Text.literal("Shadow: " + (Config.INSTANCE.textShadow ? "ON" : "OFF")),
-                (button) -> {
-                    Config.INSTANCE.textShadow = !Config.INSTANCE.textShadow;
+                    if(!Config.INSTANCE.hotbarNumbers) {
+                        Config.INSTANCE.hotbarNumbers = true;
+                        hotbarButton.setMessage(Text.literal("Hotbar Numbers: ").append(ON_TEXT));
+                    }
 
-                    boolean shadowEnabled = Config.INSTANCE.textShadow;
-
-                    shadowButton.setMessage(Text.literal("Shadow: ").append(shadowEnabled ?
-                                    Text.literal("ON") : Text.literal("OFF"))
-                            .formatted(shadowEnabled ? Formatting.GREEN : Formatting.RED)
-                    );
-                }).dimensions(contentX, startY + (buttonHeight + spacing) * 3, contentWidth, buttonHeight).build();
-        addDrawableChild(shadowButton);
+                    hotbarOnlyButton.setMessage(Text.literal("Hotbar Only: ")
+                            .append(hotbarOnly ? ON_TEXT : OFF_TEXT));
+                }).dimensions(rightX, y, optionWidth, optionHeight).build();
+        addDrawableChild(hotbarOnlyButton);
 
         int bottomY = height - 25;
-        int buttonWidth = Math.min(100, contentWidth / 2 - 5);
-        int doneX = contentX + contentWidth - buttonWidth;
+        int finalY = y;
 
         addDrawableChild(ButtonWidget.builder(
                 Text.literal("Reset"),
@@ -117,13 +142,15 @@ public class ConfigScreen extends Screen {
                     Config.INSTANCE.textAnchor = Config.TextAnchor.TOP_LEFT;
                     Config.INSTANCE.textColor = 0xFFFFFF;
                     Config.INSTANCE.textShadow = false;
+                    Config.INSTANCE.hotbarNumbers = false;
+                    Config.INSTANCE.hotbarOnly = false;
 
                     anchorIndex = 0;
                     colorIndex = 0;
 
                     remove(scaleSlider);
 
-                    scaleSlider = new SliderWidget(contentX, startY, contentWidth, buttonHeight,
+                    scaleSlider = new SliderWidget(leftX, finalY, optionWidth, optionHeight,
                             Text.literal("Scale: " + String.format("%.2f", Config.INSTANCE.textScale)),
                             (Config.INSTANCE.textScale - 0.1) / 0.9) {
                         @Override
@@ -143,12 +170,13 @@ public class ConfigScreen extends Screen {
                     colorButton.setMessage(Text.literal("Color: " + Config.INSTANCE.getColorName()));
 
                     boolean shadowEnabled = Config.INSTANCE.textShadow;
+                    boolean hotbarEnabled = Config.INSTANCE.hotbarNumbers;
+                    boolean hotbarOnly = Config.INSTANCE.hotbarOnly;
 
-                    shadowButton.setMessage(Text.literal("Shadow: ").append(shadowEnabled ?
-                                    Text.literal("ON") : Text.literal("OFF"))
-                            .formatted(shadowEnabled ? Formatting.GREEN : Formatting.RED)
-                    );
-                }).dimensions(contentX, bottomY, buttonWidth, buttonHeight).build());
+                    shadowButton.setMessage(Text.literal("Shadow: ").append(shadowEnabled ? ON_TEXT : OFF_TEXT));
+                    hotbarButton.setMessage(Text.literal("Hotbar Numbers: ").append(hotbarEnabled ? ON_TEXT : OFF_TEXT));
+                    hotbarOnlyButton.setMessage(Text.literal("Hotbar Only: ").append(hotbarOnly ? ON_TEXT : OFF_TEXT));
+                }).dimensions(leftX, bottomY, optionWidth, optionHeight).build());
 
         addDrawableChild(ButtonWidget.builder(
                 Text.literal("Done"),
@@ -160,7 +188,7 @@ public class ConfigScreen extends Screen {
                     }
 
                     client.setScreen(parent);
-                }).dimensions(doneX, bottomY, buttonWidth, buttonHeight).build());
+                }).dimensions(rightX, bottomY, optionWidth, optionHeight).build());
     }
 
     @Override

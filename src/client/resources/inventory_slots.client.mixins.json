@@ -4,7 +4,8 @@
   "package": "net.bitbylogic.inventoryslots.client.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
-    "HandledScreenMixin"
+    "HandledScreenMixin",
+    "InGameHudMixin"
   ],
   "injectors": {
     "defaultRequire": 1

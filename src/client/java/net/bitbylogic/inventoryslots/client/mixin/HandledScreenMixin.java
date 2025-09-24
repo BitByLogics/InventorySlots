@@ -36,7 +36,7 @@ public abstract class HandledScreenMixin<T extends ScreenHandler> extends Screen
     private void onRender(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         MinecraftClient client = MinecraftClient.getInstance();
 
-        if (!Config.INSTANCE.enabled || client.currentScreen instanceof CreativeInventoryScreen) {
+        if (!Config.INSTANCE.enabled || Config.INSTANCE.hotbarOnly || client.currentScreen instanceof CreativeInventoryScreen) {
             return;
         }
 
