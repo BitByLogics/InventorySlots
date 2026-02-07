@@ -1,122 +1,55 @@
 <div align="center">
 
-## Inventory Slots
+# InventorySlots
 
-**InventorySlots** is a client-side Fabric mod that lets players customize and preview inventory slot visuals with adjustable text overlays. Featuring scalable rendering, anchor point control, shadow options, and in-game previews, it's perfect for development/configuration!
+InventorySlots is a client-side Fabric mod that adds customizable text overlays to inventory slots. It is primarily designed as a utility for developers and configurators to visualize slot indices and layout positioning in-game.
 
-## InventorySlots
-
-![Issues](https://img.shields.io/github/issues-raw/BitByLogics/InventorySlots)
+[![Issues](https://img.shields.io/github/issues-raw/BitByLogics/InventorySlots)](https://github.com/BitByLogics/InventorySlots/issues)
 [![Stars](https://img.shields.io/github/stars/BitByLogics/InventorySlots)](https://github.com/BitByLogics/InventorySlots/stargazers)
+<a href="https://modrinth.com/mod/inventory-slots">
 
-<a href="#"><img src="https://raw.githubusercontent.com/intergrav/devins-badges/v3/assets/compact/supported/fabric_46h.png" height="35"></a>
-<a href="#"><img src="https://raw.githubusercontent.com/intergrav/devins-badges/v3/assets/compact/available/modrinth_vector.svg" height="35" href="https://modrinth.com/mod/inventory-slots"></a>
+<img src="https://raw.githubusercontent.com/intergrav/devins-badges/v3/assets/compact/available/modrinth_vector.svg" height="35"></a>
 
-</div>
-
-## ✨ Features
-
-- Toggle inventory slot overlays client-side
-- Customize scale, color, anchor point, and shadow
-- In-game config GUI
-- Real-time preview and hotkey toggles
-- Persistent config saved between sessions
-
----
-
-## 📷 Preview
-
-<div align="center">
-
-<table>
-  <tr>
-    <td align="center">
-      <img src="https://i.imgur.com/E3LJtgy.png" height="180" /><br>
-      <em>Double Chest Slots</em>
-    </td>
-    <td align="center">
-      <img src="https://i.imgur.com/AHIk2zc.png" height="180" /><br>
-      <em>Anvil Slots</em>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <img src="https://i.imgur.com/YMHXdrq.png" height="180" /><br>
-      <em>Brewing Stand Slots</em>
-    </td>
-    <td align="center">
-      <img src="https://i.imgur.com/rE5V1rF.png" height="180" /><br>
-      <em>Enchanting Table Slots</em>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" colspan="2">
-      <img src="https://i.imgur.com/3qoqJcX.png" height="320" /><br>
-      <em>Configuration screen with live preview</em>
-    </td>
-  </tr>
-</table>
+| Double Chest | Anvil |
+|:---:|:---:|
+| <img src="https://i.imgur.com/E3LJtgy.png" height="180" /> | <img src="https://i.imgur.com/AHIk2zc.png" height="180" /> |
+| **Brewing Stand** | **Enchanting Table** |
+| <img src="https://i.imgur.com/YMHXdrq.png" height="180" /> | <img src="https://i.imgur.com/rE5V1rF.png" height="180" /> |
 
 </div>
 
 ---
 
-## 🛠 Configuration
+### Overview
+The mod provides a real-time overlay on any container GUI. Settings can be adjusted through an in-game menu with an immediate preview of changes.
 
-You can access the InventorySlots config screen through Mod Menu. It supports:
-
-- **Enabled** (true/false)
-- **Scale** (0.25–2.0)
-- **Color** (Hex input or slider)
-- **Anchor** (Top-left, center, bottom-right, etc.)
-- **Text Shadow** (Toggle)
-
-The config file is located at:
-
-```
-.minecraft/config/inventory-slots-config.json
-```
+* **Rendering:** Adjust text scale (0.25 to 2.0), hex colors, and toggle text shadows.
+* **Positioning:** Supports multiple anchor points (Top-left, Center, Bottom-right, etc.).
+* **Persistence:** All settings are saved to a local config file and persist across sessions.
+* **Client-side:** No server-side installation required.
 
 ---
 
-## 🔧 Keybinds
+### Configuration
+You can access the settings via Mod Menu or the assigned hotkey. The following properties are configurable:
 
-| Action       | Default Key |
-|--------------|-------------|
-| Toggle Slots | `HOME`      |
-| Open Options | `END`       |
+* **Enabled:** Toggle the overlay globally.
+* **Scale:** Adjust the size of the slot index text.
+* **Color:** Change text color via hex input or slider.
+* **Anchor:** Define where the text sits within the slot.
+* **Shadow:** Toggle the standard Minecraft text shadow.
 
-> You can rebind these in Minecraft's Controls menu.
+The configuration file is stored at `.minecraft/config/inventory-slots-config.json`.
 
----
+### Keybinds
+* **HOME:** Toggle overlays
+* **END:** Open configuration menu
+*Keybinds can be changed in the standard Minecraft controls menu.*
 
-## 📦 Installation
+### Requirements & Installation
+1. Ensure you are running Minecraft 1.21.4+ with the [Fabric Loader](https://fabricmc.net/use/).
+2. Requires [Fabric API](https://modrinth.com/mod/fabric-api).
+3. Drop the `.jar` into your `mods/` folder.
 
-1. Download the latest version from [Modrinth](https://modrinth.com/mod/inventory-slots)
-2. Install [Fabric Loader](https://fabricmc.net/use/)
-3. Add InventorySlots to your `mods/` folder
-4. Launch Minecraft
-
----
-
-## 🧩 Compatibility
-
-- Minecraft: **1.20+**
-- Loader: **Fabric**
-- Required Mods: [Fabric API](https://modrinth.com/mod/fabric-api)
-
----
-
-## 📜 License
-
-This project is licensed under the MIT License.  
-See the [LICENSE](./LICENSE) file for details.
-
----
-
-## 👍 Support & Feedback
-
-Need help? Found a bug?  
-Feel free to [open an issue](https://github.com/VaultedMC/InventorySlots/issues)!
-
----
+### License & Issues
+This project is licensed under the MIT License. If you encounter bugs or have feature requests, please report them on the [GitHub Issue Tracker](https://github.com/VaultedMC/InventorySlots/issues).
