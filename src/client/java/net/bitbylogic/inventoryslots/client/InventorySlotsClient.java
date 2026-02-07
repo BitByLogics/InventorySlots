@@ -10,22 +10,25 @@ import net.minecraft.client.util.InputUtil;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 public class InventorySlotsClient implements ClientModInitializer {
+
+    public static final KeyBinding.Category CATEGORY = KeyBinding.Category.create(Identifier.of("category.inventory_slots.general"));
 
     public static final KeyBinding OPEN_CONFIG = KeyBindingHelper.registerKeyBinding(new KeyBinding(
             "key.inventory_slots.config",
             InputUtil.Type.KEYSYM,
             GLFW.GLFW_KEY_END,
-            "category.inventory_slots.general"
+            CATEGORY
     ));
 
     public static final KeyBinding TOGGLE_SLOTS = KeyBindingHelper.registerKeyBinding(new KeyBinding(
             "key.inventory_slots.toggle_slots",
             InputUtil.Type.KEYSYM,
             GLFW.GLFW_KEY_HOME,
-            "category.inventory_slots.general"
+            CATEGORY
     ));
 
     @Override
