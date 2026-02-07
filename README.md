@@ -39,17 +39,13 @@ You can access the settings via Mod Menu or the assigned hotkey. The following p
 * **Anchor:** Define where the text sits within the slot.
 * **Shadow:** Toggle the standard Minecraft text shadow.
 
-The configuration file is stored at `.minecraft/config/inventory-slots-config.json`.
+---
 
 ### Keybinds
 * **HOME:** Toggle overlays
 * **END:** Open configuration menu
 *Keybinds can be changed in the standard Minecraft controls menu.*
 
-### Requirements & Installation
-1. Ensure you are running Minecraft 1.21.4+ with the [Fabric Loader](https://fabricmc.net/use/).
-2. Requires [Fabric API](https://modrinth.com/mod/fabric-api).
-3. Drop the `.jar` into your `mods/` folder.
+---
 
-### License & Issues
-This project is licensed under the MIT License. If you encounter bugs or have feature requests, please report them on the [GitHub Issue Tracker](https://github.com/VaultedMC/InventorySlots/issues).
+No more resourcepacks or googling.
