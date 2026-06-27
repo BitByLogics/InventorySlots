@@ -1,15 +1,14 @@
 package net.bitbylogic.inventoryslots.client.mixin;
 
 import net.bitbylogic.inventoryslots.config.Config;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.Slot;
-import org.joml.Matrix3x2fStack;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -17,80 +16,65 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.List;
-
-@Mixin(HandledScreen.class)
-public abstract class HandledScreenMixin<T extends ScreenHandler> extends Screen {
+@Mixin(AbstractContainerScreen.class)
+public abstract class HandledScreenMixin<T extends AbstractContainerMenu> extends Screen {
 
     protected HandledScreenMixin() {
-        super(null);
+        super(Component.empty());
     }
 
-    @Shadow protected int x;
-    @Shadow protected int y;
+    @Shadow protected int leftPos;
+    @Shadow protected int topPos;
 
     @Final
-    @Shadow protected T handler;
+    @Shadow protected T menu;
 
-    @Inject(method = "render", at = @At("TAIL"))
-    private void onRender(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-        MinecraftClient client = MinecraftClient.getInstance();
+    @Inject(method = "extractContents", at = @At("TAIL"))
+    private void onExtractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta, CallbackInfo ci) {
+        Minecraft mc = Minecraft.getInstance();
 
-        if (!Config.INSTANCE.enabled || Config.INSTANCE.hotbarOnly || client.currentScreen instanceof CreativeInventoryScreen) {
+        if (!Config.INSTANCE.enabled || Config.INSTANCE.hotbarOnly) {
             return;
         }
 
-        TextRenderer textRenderer = client.textRenderer;
-        List<Slot> slots = handler.slots;
+        Font font = getFont();
         float scale = Config.INSTANCE.textScale;
 
-        Matrix3x2fStack matrices = context.getMatrices();
+        for (int i = 0; i < menu.slots.size(); i++) {
+            Slot slot = menu.slots.get(i);
 
-        for (int i = 0; i < slots.size(); i++) {
-            Slot slot = slots.get(i);
-
-            if (!slot.isEnabled()) {
+            if (!slot.isActive()) {
                 continue;
             }
 
-            int slotX = x + slot.x;
-            int slotY = y + slot.y;
+            int slotX = leftPos + slot.x;
+            int slotY = topPos + slot.y;
 
             String text = String.valueOf(i);
-            float textWidth = textRenderer.getWidth(text) * scale;
-            float textHeight = textRenderer.fontHeight * scale;
+
+            float textWidth = font.width(text) * scale;
+            float textHeight = font.lineHeight * scale;
 
             float offsetX = Config.INSTANCE.textAnchor.getOffsetX(textWidth, 16);
             float offsetY = Config.INSTANCE.textAnchor.getOffsetY(textHeight, 16);
 
-            matrices.pushMatrix();
-            matrices.translate(slotX + offsetX, slotY + offsetY);
-            matrices.scale(scale, scale);
+            var pose = graphics.pose();
 
-            if (Config.INSTANCE.textShadow) {
-                context.drawTextWithShadow(
-                        textRenderer,
-                        text,
-                        0,
-                        0,
-                        Config.INSTANCE.textColor
-                );
+            pose.pushMatrix();
 
-                matrices.popMatrix();
+            pose.translate(slotX + offsetX, slotY + offsetY);
+            pose.scale(scale, scale);
 
-                continue;
-            }
-
-            context.drawText(
-                    textRenderer,
+            graphics.text(
+                    font,
                     text,
                     0,
                     0,
                     Config.INSTANCE.textColor,
-                    false
+                    Config.INSTANCE.textShadow
             );
 
-            matrices.popMatrix();
+            pose.popMatrix();
         }
     }
 
