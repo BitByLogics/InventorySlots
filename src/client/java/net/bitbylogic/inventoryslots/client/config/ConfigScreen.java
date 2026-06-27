@@ -187,7 +187,7 @@ public class ConfigScreen extends Screen {
                         return;
                     }
 
-                    minecraft.setScreen(parent);
+                    minecraft.setScreenAndShow(parent);
                 }).bounds(rightX, bottomY, optionWidth, optionHeight).build());
     }
 
@@ -253,7 +253,7 @@ public class ConfigScreen extends Screen {
             return;
         }
 
-        minecraft.setScreen(parent);
+        minecraft.setScreenAndShow(parent);
     }
 
 }

@@ -8,6 +8,8 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.client.gui.screens.LoadingOverlay;
+import net.minecraft.client.gui.screens.Overlay;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
@@ -48,11 +50,13 @@ public class InventorySlotsClient implements ClientModInitializer {
 
                 message.append(statusText);
 
-                client.gui.setOverlayMessage(message, false);
+                if (client.player != null) {
+                    client.player.sendOverlayMessage(message);
+                }
             }
 
             while (OPEN_CONFIG.consumeClick()) {
-                client.setScreen(new ConfigScreen(client.screen));
+                client.setScreenAndShow(new ConfigScreen(client.gui.screen()));
             }
         });
 
