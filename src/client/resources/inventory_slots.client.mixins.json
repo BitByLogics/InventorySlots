@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "HandledScreenMixin",
+    "ScreenWidgetMixin",
     "InGameHudMixin"
   ],
   "injectors": {

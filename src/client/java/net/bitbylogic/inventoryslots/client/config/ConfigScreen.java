@@ -22,6 +22,7 @@ public class ConfigScreen extends Screen {
     private ButtonWidget shadowButton;
     private ButtonWidget hotbarButton;
     private ButtonWidget hotbarOnlyButton;
+    private ButtonWidget widgetButton;
     private SliderWidget scaleSlider;
 
     private int anchorIndex;
@@ -131,6 +132,17 @@ public class ConfigScreen extends Screen {
                             .append(hotbarOnly ? ON_TEXT : OFF_TEXT));
                 }).dimensions(rightX, y, optionWidth, optionHeight).build();
         addDrawableChild(hotbarOnlyButton);
+        y += 25;
+
+        widgetButton = ButtonWidget.builder(
+                Text.literal("Widget Numbers: ").append(Config.INSTANCE.widgetNumbers ? ON_TEXT : OFF_TEXT),
+                (button) -> {
+                    Config.INSTANCE.widgetNumbers = !Config.INSTANCE.widgetNumbers;
+
+                    widgetButton.setMessage(Text.literal("Widget Numbers: ")
+                            .append(Config.INSTANCE.widgetNumbers ? ON_TEXT : OFF_TEXT));
+                }).dimensions(leftX, y, optionWidth, optionHeight).build();
+        addDrawableChild(widgetButton);
 
         int bottomY = height - 25;
         int finalY = y;
@@ -144,6 +156,7 @@ public class ConfigScreen extends Screen {
                     Config.INSTANCE.textShadow = false;
                     Config.INSTANCE.hotbarNumbers = false;
                     Config.INSTANCE.hotbarOnly = false;
+                    Config.INSTANCE.widgetNumbers = false;
 
                     anchorIndex = 0;
                     colorIndex = 0;
@@ -176,6 +189,7 @@ public class ConfigScreen extends Screen {
                     shadowButton.setMessage(Text.literal("Shadow: ").append(shadowEnabled ? ON_TEXT : OFF_TEXT));
                     hotbarButton.setMessage(Text.literal("Hotbar Numbers: ").append(hotbarEnabled ? ON_TEXT : OFF_TEXT));
                     hotbarOnlyButton.setMessage(Text.literal("Hotbar Only: ").append(hotbarOnly ? ON_TEXT : OFF_TEXT));
+                    widgetButton.setMessage(Text.literal("Widget Numbers: ").append(Config.INSTANCE.widgetNumbers ? ON_TEXT : OFF_TEXT));
                 }).dimensions(leftX, bottomY, optionWidth, optionHeight).build());
 
         addDrawableChild(ButtonWidget.builder(
