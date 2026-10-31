@@ -22,6 +22,7 @@ public class ConfigScreen extends Screen {
     private Button shadowButton;
     private Button hotbarButton;
     private Button hotbarOnlyButton;
+    private Button widgetButton;
     private AbstractSliderButton scaleSlider;
 
     private int anchorIndex;
@@ -131,6 +132,17 @@ public class ConfigScreen extends Screen {
                             .append(hotbarOnly ? ON_TEXT : OFF_TEXT));
                 }).bounds(rightX, y, optionWidth, optionHeight).build();
         addRenderableWidget(hotbarOnlyButton);
+        y += 25;
+
+        widgetButton = Button.builder(
+                Component.literal("Widget Numbers: ").append(Config.INSTANCE.widgetNumbers ? ON_TEXT : OFF_TEXT),
+                (button) -> {
+                    Config.INSTANCE.widgetNumbers = !Config.INSTANCE.widgetNumbers;
+
+                    widgetButton.setMessage(Component.literal("Widget Numbers: ")
+                            .append(Config.INSTANCE.widgetNumbers ? ON_TEXT : OFF_TEXT));
+                }).bounds(leftX, y, optionWidth, optionHeight).build();
+        addRenderableWidget(widgetButton);
 
         int bottomY = height - 25;
         int finalY = y;
@@ -144,6 +156,7 @@ public class ConfigScreen extends Screen {
                     Config.INSTANCE.textShadow = false;
                     Config.INSTANCE.hotbarNumbers = false;
                     Config.INSTANCE.hotbarOnly = false;
+                    Config.INSTANCE.widgetNumbers = false;
 
                     anchorIndex = 0;
                     colorIndex = 0;
@@ -176,6 +189,7 @@ public class ConfigScreen extends Screen {
                     shadowButton.setMessage(Component.literal("Shadow: ").append(shadowEnabled ? ON_TEXT : OFF_TEXT));
                     hotbarButton.setMessage(Component.literal("Hotbar Numbers: ").append(hotbarEnabled ? ON_TEXT : OFF_TEXT));
                     hotbarOnlyButton.setMessage(Component.literal("Hotbar Only: ").append(hotbarOnly ? ON_TEXT : OFF_TEXT));
+                    widgetButton.setMessage(Component.literal("Widget Numbers: ").append(Config.INSTANCE.widgetNumbers ? ON_TEXT : OFF_TEXT));
                 }).bounds(leftX, bottomY, optionWidth, optionHeight).build());
 
         addRenderableWidget(Button.builder(
