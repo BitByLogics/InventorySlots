@@ -13,7 +13,6 @@ import net.minecraft.client.gui.screens.Overlay;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
-import org.lwjgl.glfw.GLFW;
 
 public class InventorySlotsClient implements ClientModInitializer {
 
@@ -21,15 +20,15 @@ public class InventorySlotsClient implements ClientModInitializer {
 
     public static final KeyMapping OPEN_CONFIG = KeyMappingHelper.registerKeyMapping(new KeyMapping(
             "key.inventory_slots.config",
-            InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_END,
+            InputConstants.Type.KEYBOARD,
+            InputConstants.KEY_END,
             CATEGORY
     ));
 
     public static final KeyMapping TOGGLE_SLOTS = KeyMappingHelper.registerKeyMapping(new KeyMapping(
             "key.inventory_slots.toggle_slots",
-            InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_HOME,
+            InputConstants.Type.KEYBOARD,
+            InputConstants.KEY_HOME,
             CATEGORY
     ));
 
