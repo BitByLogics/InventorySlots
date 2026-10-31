@@ -24,6 +24,7 @@ public class Config {
     public boolean textShadow = true;
     public boolean hotbarNumbers = false;
     public boolean hotbarOnly = false;
+    public boolean widgetNumbers = false;
 
     public static final int[] COLOR_PALETTE = {
             0xFFFFFFFF, // White
@@ -115,6 +116,7 @@ public class Config {
             json.addProperty("textShadow", textShadow);
             json.addProperty("hotbarNumbers", hotbarNumbers);
             json.addProperty("hotbarOnly", hotbarOnly);
+            json.addProperty("widgetNumbers", widgetNumbers);
 
             try (FileWriter writer = new FileWriter(CONFIG_FILE)) {
                 Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -177,6 +179,10 @@ public class Config {
                     if (json.has("hotbarOnly")) {
                         hotbarOnly = json.get("hotbarOnly").getAsBoolean();
                     }
+
+                    if (json.has("widgetNumbers")) {
+                        widgetNumbers = json.get("widgetNumbers").getAsBoolean();
+                    }
                 }
             }
         } catch (IOException | JsonSyntaxException e) {
@@ -192,6 +198,7 @@ public class Config {
             textShadow = false;
             hotbarNumbers = false;
             hotbarOnly = false;
+            widgetNumbers = false;
             save();
         }
     }
