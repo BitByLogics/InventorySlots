@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "inventory_slots_test",
+  "version": "1.0.0",
+  "name": "Inventory Slots client tests",
+  "environment": "client",
+  "entrypoints": {
+    "fabric-client-gametest": ["net.bitbylogic.inventoryslots.InventorySlotsClientTest"]
+  }
+}
