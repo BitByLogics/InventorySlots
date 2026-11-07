@@ -22,13 +22,20 @@ loom {
 }
 
 fabricApi {
+    configureTests {
+        createSourceSet = true
+        modId = 'inventory_slots_test'
+        enableGameTests = false
+        enableClientGameTests = true
+    }
+
     configureDataGeneration {
         client = true
     }
 }
 
 repositories {
-
+    mavenCentral()
 }
 
 dependencies {
@@ -36,6 +43,14 @@ dependencies {
     implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
     implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
 }
 
 processResources {

@@ -20,7 +20,7 @@ public abstract class ScreenWidgetMixin {
 
     @Inject(method = "extractRenderStateWithTooltipAndSubtitles", at = @At("TAIL"))
     private void onExtractRenderStateWithTooltipAndSubtitles(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-        if (!Config.INSTANCE.enabled || !Config.INSTANCE.widgetNumbers) {
+        if (!Config.INSTANCE.enabled || !Config.INSTANCE.widgetNumbers || Config.INSTANCE.hotbarOnly) {
             return;
         }
 
