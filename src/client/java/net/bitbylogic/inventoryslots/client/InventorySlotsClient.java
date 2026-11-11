@@ -52,7 +52,6 @@ public class InventorySlotsClient implements ClientModInitializer {
         }
     }
 
-    // Keep the original public bindings available for integrations.
     public static final KeyMapping OPEN_CONFIG = Action.CONFIG.key;
     public static final KeyMapping TOGGLE_SLOTS = Action.TOGGLE.key;
     private final Set<InputConstants.Key> heldScreenKeys = new HashSet<>();
@@ -73,7 +72,6 @@ public class InventorySlotsClient implements ClientModInitializer {
             }
         });
 
-        // Vanilla does not dispatch ordinary key mappings to an open inventory.
         ScreenEvents.BEFORE_INIT.register((client, screen, width, height) -> {
             if (!(screen instanceof AbstractContainerScreen<?>)
                 && !(screen instanceof TitleScreen) && !(screen instanceof PauseScreen)) {
@@ -125,10 +123,12 @@ public class InventorySlotsClient implements ClientModInitializer {
 
     private static void run(Action action, Minecraft client, Screen screen) {
         Config config = Config.INSTANCE;
+
         if (action == Action.CONFIG) {
             client.setScreenAndShow(new ConfigScreen(screen));
             return;
         }
+
         Component label;
         boolean enabled;
         if (action == Action.SCREEN || action == Action.TYPE) {
@@ -137,9 +137,14 @@ public class InventorySlotsClient implements ClientModInitializer {
                 return;
             }
             String type = SlotVisibility.menuType(inventory);
-            enabled = action == Action.SCREEN
-                ? config.toggleScreen(type, screen.getTitle().getString()) : config.toggleMenuType(type);
-            label = action == Action.SCREEN ? screen.getTitle() : Component.literal(type);
+
+            if (action == Action.SCREEN) {
+                enabled = config.toggleScreen(type, screen.getTitle().getString());
+                label = screen.getTitle();
+            } else {
+                enabled = config.toggleMenuType(type);
+                label = Component.literal(type);
+            }
         } else {
             enabled = switch (action) {
                 case TOGGLE -> config.enabled = !config.enabled;
@@ -153,12 +158,24 @@ public class InventorySlotsClient implements ClientModInitializer {
                 default -> throw new IllegalStateException("Unexpected action: " + action);
             };
             label = Component.translatable(action.key.getName());
+
+            if (action == Action.HUD && !config.hotbarNumbers) {
+                config.hotbarOnly = false;
+            }
         }
+
         config.save();
         message(client, label.copy().withStyle(ChatFormatting.GRAY)
             .append(Component.literal(" • ").withStyle(ChatFormatting.DARK_GRAY))
-            .append(Component.translatable(enabled ? "options.on" : "options.off")
-                .withStyle(enabled ? ChatFormatting.GREEN : ChatFormatting.RED)));
+            .append(onOff(enabled)));
+    }
+
+    public static Component onOff(boolean enabled) {
+        if (enabled) {
+            return Component.translatable("options.on").withStyle(ChatFormatting.GREEN);
+        }
+
+        return Component.translatable("options.off").withStyle(ChatFormatting.RED);
     }
 
     private static void message(Minecraft client, Component text) {
