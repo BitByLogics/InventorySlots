@@ -45,7 +45,6 @@ public class InventorySlotsClientTest implements FabricClientGameTest {
             });
             assertVisibleSlots(context, 63);
 
-            // A freely rebound action must work inside an inventory, once per press.
             context.runOnClient(client -> {
                 InventorySlotsClient.Action.SCREEN.key.setKey(InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_F8));
                 KeyMapping.resetMapping();
@@ -123,6 +122,8 @@ public class InventorySlotsClientTest implements FabricClientGameTest {
     }
 
     private static void check(boolean condition, String message) {
-        if (!condition) throw new AssertionError(message);
+        if (!condition) {
+            throw new AssertionError(message);
+        }
     }
 }

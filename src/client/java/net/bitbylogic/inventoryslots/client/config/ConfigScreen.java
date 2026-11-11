@@ -1,5 +1,6 @@
 package net.bitbylogic.inventoryslots.client.config;
 
+import net.bitbylogic.inventoryslots.client.InventorySlotsClient;
 import net.bitbylogic.inventoryslots.client.SlotLabelRenderer;
 import net.bitbylogic.inventoryslots.client.SlotVisibility;
 import net.bitbylogic.inventoryslots.config.Config;
@@ -85,7 +86,13 @@ public class ConfigScreen extends Screen {
             v -> config.playerInventoryInContainers = v);
         toggle("player_hotbar", 2, 1, () -> config.playerHotbarInContainers, v -> config.playerHotbarInContainers = v);
         toggle("creative", 3, 0, () -> config.creativeInventory, v -> config.creativeInventory = v);
-        toggle("hotbar", 3, 1, () -> config.hotbarNumbers, v -> config.hotbarNumbers = v);
+        toggle("hotbar", 3, 1, () -> config.hotbarNumbers, v -> {
+            config.hotbarNumbers = v;
+            if (!v) {
+                config.hotbarOnly = false;
+            }
+            rebuildWidgets();
+        });
         toggle("widgets", 4, 0, () -> config.widgetNumbers, v -> config.widgetNumbers = v);
         toggle("hotbar_only", 4, 1, () -> config.hotbarOnly, v -> {
             config.hotbarOnly = v;
@@ -138,9 +145,15 @@ public class ConfigScreen extends Screen {
         if (parent instanceof AbstractContainerScreen<?> inventory) {
             ids.add(SlotVisibility.menuType(inventory));
         }
-        // Normally controlled on General; retain explicit type exclusions so they can be removed here.
-        if (!config.disabledMenuTypes.contains("inventory_slots:player")) ids.remove("inventory_slots:player");
-        if (!config.disabledMenuTypes.contains("inventory_slots:creative")) ids.remove("inventory_slots:creative");
+
+        if (!config.disabledMenuTypes.contains("inventory_slots:player")) {
+            ids.remove("inventory_slots:player");
+        }
+
+        if (!config.disabledMenuTypes.contains("inventory_slots:creative")) {
+            ids.remove("inventory_slots:creative");
+        }
+
         List<String> entries = new ArrayList<>(ids);
         int pageSize = rows(64) * 2;
         paginate(entries.size(), pageSize);
@@ -148,8 +161,14 @@ public class ConfigScreen extends Screen {
             String id = entries.get(i);
             int position = i - page * pageSize;
             Component name = menuName(id);
+            int entryX = left;
+
+            if (position % 2 != 0) {
+                entryX = right();
+            }
+
             Button entry = button(status(name, !config.disabledMenuTypes.contains(id)),
-                position % 2 == 0 ? left : right(), 64 + position / 2 * 24, columnWidth, () -> {
+                entryX, 64 + position / 2 * 24, columnWidth, () -> {
                     config.toggleMenuType(id);
                     rebuildWidgets();
                 });
@@ -212,7 +231,13 @@ public class ConfigScreen extends Screen {
 
     private void toggle(String key, int row, int column, BooleanSupplier getter, Consumer<Boolean> setter) {
         Component name = Component.translatable("inventory_slots.option." + key);
-        Button entry = button(status(name, getter.getAsBoolean()), column == 0 ? left : right(),
+        int entryX = left;
+
+        if (column != 0) {
+            entryX = right();
+        }
+
+        Button entry = button(status(name, getter.getAsBoolean()), entryX,
             64 + row * 24, columnWidth, () -> {
                 setter.accept(!getter.getAsBoolean());
                 rebuildWidgets();
@@ -229,8 +254,7 @@ public class ConfigScreen extends Screen {
     }
 
     private static Component status(Component label, boolean enabled) {
-        return label.copy().append(": ").append(Component.translatable(enabled ? "options.on" : "options.off")
-            .withStyle(enabled ? ChatFormatting.GREEN : ChatFormatting.RED));
+        return label.copy().append(": ").append(InventorySlotsClient.onOff(enabled));
     }
 
     private static Component menuName(String id) {

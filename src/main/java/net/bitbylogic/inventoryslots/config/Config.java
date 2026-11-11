@@ -29,7 +29,6 @@ public class Config {
     public boolean hotbarNumbers = false;
     public boolean hotbarOnly = false;
     public boolean widgetNumbers = false;
-    // Defaults preserve the behavior of existing installations.
     public boolean inventoryScreen = true;
     public boolean creativeInventory = true;
     public boolean containerSlots = true;
@@ -57,7 +56,6 @@ public class Config {
 
     public enum ScreenKind { INVENTORY, CREATIVE, CONTAINER }
 
-    /** The title is matched exactly; unrelated chest menus remain enabled. */
     public record ScreenRule(String menuType, String title) { }
 
     public enum TextAnchor {
@@ -87,33 +85,60 @@ public class Config {
 
     public String colorTranslationKey() {
         for (int i = 0; i < COLOR_PALETTE.length; i++) {
-            if (COLOR_PALETTE[i] == textColor) return "inventory_slots.color." + COLOR_NAMES[i];
+            if (COLOR_PALETTE[i] == textColor) {
+                return "inventory_slots.color." + COLOR_NAMES[i];
+            }
         }
         return "inventory_slots.color.custom";
     }
 
+    public boolean isScreenAllowed(String menuType, String title) {
+        return enabled && !hotbarOnly && !disabledMenuTypes.contains(menuType)
+                && !excludedScreens.contains(new ScreenRule(menuType, title));
+    }
+
     public boolean shouldShowSlot(ScreenKind kind, String menuType, String title,
                                   boolean playerSlot, boolean hotbarSlot) {
-        if (!enabled || hotbarOnly || disabledMenuTypes.contains(menuType)
-                || excludedScreens.contains(new ScreenRule(menuType, title))) return false;
-        return switch (kind) {
-            case INVENTORY -> inventoryScreen;
-            case CREATIVE -> creativeInventory;
-            case CONTAINER -> playerSlot
-                    ? (hotbarSlot ? playerHotbarInContainers : playerInventoryInContainers)
-                    : containerSlots;
-        };
+        if (!isScreenAllowed(menuType, title)) {
+            return false;
+        }
+
+        switch (kind) {
+            case INVENTORY -> {
+                return inventoryScreen;
+            }
+            case CREATIVE -> {
+                return creativeInventory;
+            }
+            default -> {
+                if (!playerSlot) {
+                    return containerSlots;
+                }
+
+                if (hotbarSlot) {
+                    return playerHotbarInContainers;
+                }
+
+                return playerInventoryInContainers;
+            }
+        }
     }
 
     public boolean toggleScreen(String menuType, String title) {
         ScreenRule rule = new ScreenRule(menuType, title);
-        if (excludedScreens.remove(rule)) return true;
+        if (excludedScreens.remove(rule)) {
+            return true;
+        }
+
         excludedScreens.add(rule);
         return false;
     }
 
     public boolean toggleMenuType(String menuType) {
-        if (disabledMenuTypes.remove(menuType)) return true;
+        if (disabledMenuTypes.remove(menuType)) {
+            return true;
+        }
+
         disabledMenuTypes.add(menuType);
         return false;
     }
@@ -131,13 +156,20 @@ public class Config {
     }
 
     public void reset() {
+        boolean wasEnabled = enabled;
+
         read(GSON.toJsonTree(new Config(file)).getAsJsonObject());
+
+        enabled = wasEnabled;
     }
 
     public void save() {
         Path temporary = file.resolveSibling(file.getFileName() + ".tmp");
         try {
-            if (file.getParent() != null) Files.createDirectories(file.getParent());
+            if (file.getParent() != null) {
+                Files.createDirectories(file.getParent());
+            }
+
             try (Writer writer = Files.newBufferedWriter(temporary, StandardCharsets.UTF_8)) {
                 GSON.toJson(this, writer);
             }
@@ -154,17 +186,34 @@ public class Config {
         }
         try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
             JsonObject json = GSON.fromJson(reader, JsonObject.class);
-            if (json != null) read(json);
+            if (json != null) {
+                read(json);
+            }
         } catch (IOException | RuntimeException e) {
-            // Keep a damaged file for the user to inspect instead of overwriting it.
             System.err.println("[Inventory Slots] Failed to load config: " + e.getMessage());
+            backupDamagedFile();
+        }
+    }
+
+    private void backupDamagedFile() {
+        Path backup = file.resolveSibling(file.getFileName() + ".bak");
+
+        try {
+            Files.copy(file, backup, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            System.err.println("[Inventory Slots] Failed to back up damaged config: " + e.getMessage());
         }
     }
 
     private void read(JsonObject json) {
         enabled = value(json, "enabled", enabled, JsonElement::getAsBoolean);
         float scale = value(json, "textScale", textScale, JsonElement::getAsFloat);
-        textScale = Float.isFinite(scale) ? Math.max(0.1f, Math.min(1.0f, scale)) : 0.5f;
+        if (Float.isFinite(scale)) {
+            textScale = Math.max(0.1f, Math.min(1.0f, scale));
+        } else {
+            textScale = 0.5f;
+        }
+
         textColor = 0xFF000000 | value(json, "textColor", textColor, JsonElement::getAsInt);
         textAnchor = value(json, "textAnchor", textAnchor, v -> TextAnchor.valueOf(v.getAsString()));
         textShadow = value(json, "textShadow", textShadow, JsonElement::getAsBoolean);
@@ -178,21 +227,29 @@ public class Config {
         playerHotbarInContainers = value(json, "playerHotbarInContainers", playerHotbarInContainers, JsonElement::getAsBoolean);
         disabledMenuTypes = value(json, "disabledMenuTypes", disabledMenuTypes, v -> {
             Set<String> result = new LinkedHashSet<>();
-            for (JsonElement element : v.getAsJsonArray()) result.add(element.getAsString());
+            for (JsonElement element : v.getAsJsonArray()) {
+                result.add(element.getAsString());
+            }
+
             return result;
         });
         excludedScreens = value(json, "excludedScreens", excludedScreens, v -> {
             Set<ScreenRule> result = new LinkedHashSet<>();
             for (JsonElement element : v.getAsJsonArray()) {
                 ScreenRule rule = GSON.fromJson(element, ScreenRule.class);
-                if (rule != null && rule.menuType() != null && rule.title() != null) result.add(rule);
+                if (rule != null && rule.menuType() != null && rule.title() != null) {
+                    result.add(rule);
+                }
             }
             return result;
         });
     }
 
     private static <T> T value(JsonObject json, String key, T fallback, Function<JsonElement, T> parser) {
-        if (!json.has(key) || json.get(key).isJsonNull()) return fallback;
+        if (!json.has(key) || json.get(key).isJsonNull()) {
+            return fallback;
+        }
+
         try {
             return parser.apply(json.get(key));
         } catch (RuntimeException e) {
