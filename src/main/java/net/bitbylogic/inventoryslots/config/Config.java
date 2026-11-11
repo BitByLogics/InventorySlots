@@ -2,71 +2,72 @@ package net.bitbylogic.inventoryslots.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonSyntaxException;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Reader;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.LinkedHashSet;
+import java.util.Locale;
+import java.util.Set;
+import java.util.function.Function;
 
 public class Config {
 
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+
     public static final Config INSTANCE = new Config();
 
-    public boolean enabled = false;
+    private final transient Path file;
 
+    public boolean enabled = false;
     public float textScale = 0.5f;
     public int textColor = 0xFFFFFFFF;
-
     public TextAnchor textAnchor = TextAnchor.TOP_LEFT;
-
     public boolean textShadow = true;
     public boolean hotbarNumbers = false;
     public boolean hotbarOnly = false;
     public boolean widgetNumbers = false;
+    public boolean inventoryScreen = true;
+    public boolean creativeInventory = true;
+    public boolean containerSlots = true;
+    public boolean playerInventoryInContainers = true;
+    public boolean playerHotbarInContainers = true;
+    public Set<String> disabledMenuTypes = new LinkedHashSet<>();
+    public Set<ScreenRule> excludedScreens = new LinkedHashSet<>();
 
     public static final int[] COLOR_PALETTE = {
-            0xFFFFFFFF, // White
-            0xFFFF0000, // Red
-            0xFF00FF00, // Green
-            0xFF0000FF, // Blue
-            0xFFFFFF00, // Yellow
-            0xFFFF00FF, // Magenta
-            0xFF00FFFF, // Cyan
-            0xFFFFA500, // Orange
-            0xFF800080, // Purple
-            0xFFFF69B4, // Pink
-            0xFF808080, // Gray
-            0xFF000000  // Black
+            0xFFFFFFFF, 0xFFFF0000, 0xFF00FF00, 0xFF0000FF, 0xFFFFFF00, 0xFFFF00FF,
+            0xFF00FFFF, 0xFFFFA500, 0xFF800080, 0xFFFF69B4, 0xFF808080, 0xFF000000
     };
-
     public static final String[] COLOR_NAMES = {
-            "White", "Red", "Green", "Blue", "Yellow",
-            "Magenta", "Cyan", "Orange", "Purple", "Pink", "Gray", "Black"
+            "white", "red", "green", "blue", "yellow", "magenta",
+            "cyan", "orange", "purple", "pink", "gray", "black"
     };
 
-    private static final String CONFIG_FILE = "config/inventory-slots-config.json";
+    public Config() {
+        this(Path.of("config", "inventory-slots-config.json"));
+    }
+
+    public Config(Path file) {
+        this.file = file;
+    }
+
+    public enum ScreenKind { INVENTORY, CREATIVE, CONTAINER }
+
+    public record ScreenRule(String menuType, String title) { }
 
     public enum TextAnchor {
-        TOP_LEFT("Top Left"),
-        TOP_CENTER("Top Center"),
-        TOP_RIGHT("Top Right"),
-        CENTER_LEFT("Center Left"),
-        CENTER("Center"),
-        CENTER_RIGHT("Center Right"),
-        BOTTOM_LEFT("Bottom Left"),
-        BOTTOM_CENTER("Bottom Center"),
-        BOTTOM_RIGHT("Bottom Right");
+        TOP_LEFT, TOP_CENTER, TOP_RIGHT, CENTER_LEFT, CENTER, CENTER_RIGHT,
+        BOTTOM_LEFT, BOTTOM_CENTER, BOTTOM_RIGHT;
 
-        private final String displayName;
-
-        TextAnchor(String displayName) {
-            this.displayName = displayName;
-        }
-
-        public String getDisplayName() {
-            return displayName;
+        public String translationKey() {
+            return "inventory_slots.anchor." + name().toLowerCase(Locale.ROOT);
         }
 
         public float getOffsetX(float textWidth, int slotSize) {
@@ -84,123 +85,180 @@ public class Config {
                 case BOTTOM_LEFT, BOTTOM_CENTER, BOTTOM_RIGHT -> slotSize - textHeight - 1;
             };
         }
-
     }
 
-    public String getColorName() {
+    public String colorTranslationKey() {
         for (int i = 0; i < COLOR_PALETTE.length; i++) {
             if (COLOR_PALETTE[i] == textColor) {
-                return COLOR_NAMES[i];
+                return "inventory_slots.color." + COLOR_NAMES[i];
             }
         }
+        return "inventory_slots.color.custom";
+    }
 
-        return "Custom";
+    public boolean isScreenAllowed(String menuType, String title) {
+        return enabled && !hotbarOnly && !disabledMenuTypes.contains(menuType)
+                && !excludedScreens.contains(new ScreenRule(menuType, title));
+    }
+
+    public boolean shouldShowSlot(ScreenKind kind, String menuType, String title,
+                                  boolean playerSlot, boolean hotbarSlot) {
+        if (!isScreenAllowed(menuType, title)) {
+            return false;
+        }
+
+        switch (kind) {
+            case INVENTORY -> {
+                return inventoryScreen;
+            }
+            case CREATIVE -> {
+                return creativeInventory;
+            }
+            default -> {
+                if (!playerSlot) {
+                    return containerSlots;
+                }
+
+                if (hotbarSlot) {
+                    return playerHotbarInContainers;
+                }
+
+                return playerInventoryInContainers;
+            }
+        }
+    }
+
+    public boolean toggleScreen(String menuType, String title) {
+        ScreenRule rule = new ScreenRule(menuType, title);
+        if (excludedScreens.remove(rule)) {
+            return true;
+        }
+
+        excludedScreens.add(rule);
+        return false;
+    }
+
+    public boolean toggleMenuType(String menuType) {
+        if (disabledMenuTypes.remove(menuType)) {
+            return true;
+        }
+
+        disabledMenuTypes.add(menuType);
+        return false;
+    }
+
+    public void containersOnly() {
+        enabled = true;
+        hotbarOnly = false;
+        inventoryScreen = false;
+        creativeInventory = false;
+        containerSlots = true;
+        playerInventoryInContainers = false;
+        playerHotbarInContainers = false;
+        hotbarNumbers = false;
+        widgetNumbers = false;
+    }
+
+    public void reset() {
+        boolean wasEnabled = enabled;
+
+        read(GSON.toJsonTree(new Config(file)).getAsJsonObject());
+
+        enabled = wasEnabled;
     }
 
     public void save() {
+        Path temporary = file.resolveSibling(file.getFileName() + ".tmp");
         try {
-            File configDir = new File("config");
-            if (!configDir.exists()) {
-                configDir.mkdirs();
+            if (file.getParent() != null) {
+                Files.createDirectories(file.getParent());
             }
 
-            JsonObject json = new JsonObject();
-
-            json.addProperty("enabled", enabled);
-
-            json.addProperty("textScale", textScale);
-            json.addProperty("textColor", textColor);
-
-            json.addProperty("textAnchor", textAnchor.name());
-
-            json.addProperty("textShadow", textShadow);
-            json.addProperty("hotbarNumbers", hotbarNumbers);
-            json.addProperty("hotbarOnly", hotbarOnly);
-            json.addProperty("widgetNumbers", widgetNumbers);
-
-            try (FileWriter writer = new FileWriter(CONFIG_FILE)) {
-                Gson gson = new GsonBuilder().setPrettyPrinting().create();
-                gson.toJson(json, writer);
+            try (Writer writer = Files.newBufferedWriter(temporary, StandardCharsets.UTF_8)) {
+                GSON.toJson(this, writer);
             }
-
+            Files.move(temporary, file, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             System.err.println("[Inventory Slots] Failed to save config: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
     public void load() {
-        try {
-            File configFile = new File(CONFIG_FILE);
-
-            if (!configFile.exists()) {
-                save();
-                return;
-            }
-
-            try (FileReader reader = new FileReader(configFile)) {
-                Gson gson = new Gson();
-                JsonObject json = gson.fromJson(reader, JsonObject.class);
-
-                if (json != null) {
-                    if(json.has("enabled")) {
-                        enabled = json.get("enabled").getAsBoolean();
-                    }
-
-                    if (json.has("textScale")) {
-                        textScale = json.get("textScale").getAsFloat();
-                        textScale = Math.max(0.1f, Math.min(1.0f, textScale));
-                    }
-
-                    if (json.has("textColor")) {
-                        textColor = json.get("textColor").getAsInt();
-                        textColor = 0xFF000000 | textColor;
-                    }
-
-                    if (json.has("textAnchor")) {
-                        String anchorName = json.get("textAnchor").getAsString();
-
-                        try {
-                            textAnchor = TextAnchor.valueOf(anchorName);
-                        } catch (IllegalArgumentException e) {
-                            System.err.println("[Inventory Slots] Invalid anchor value in config: " + anchorName);
-                            textAnchor = TextAnchor.TOP_LEFT;
-                        }
-                    }
-
-                    if (json.has("textShadow")) {
-                        textShadow = json.get("textShadow").getAsBoolean();
-                    }
-
-                    if (json.has("hotbarNumbers")) {
-                        hotbarNumbers = json.get("hotbarNumbers").getAsBoolean();
-                    }
-
-                    if (json.has("hotbarOnly")) {
-                        hotbarOnly = json.get("hotbarOnly").getAsBoolean();
-                    }
-
-                    if (json.has("widgetNumbers")) {
-                        widgetNumbers = json.get("widgetNumbers").getAsBoolean();
-                    }
-                }
-            }
-        } catch (IOException | JsonSyntaxException e) {
-            System.err.println("Failed to load config, using defaults: " + e.getMessage());
-
-            enabled = false;
-
-            textScale = 0.5f;
-            textColor = 0xFFFFFF;
-
-            textAnchor = TextAnchor.TOP_LEFT;
-
-            textShadow = false;
-            hotbarNumbers = false;
-            hotbarOnly = false;
-            widgetNumbers = false;
+        if (!Files.exists(file)) {
             save();
+            return;
+        }
+        try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+            JsonObject json = GSON.fromJson(reader, JsonObject.class);
+            if (json != null) {
+                read(json);
+            }
+        } catch (IOException | RuntimeException e) {
+            System.err.println("[Inventory Slots] Failed to load config: " + e.getMessage());
+            backupDamagedFile();
         }
     }
 
+    private void backupDamagedFile() {
+        Path backup = file.resolveSibling(file.getFileName() + ".bak");
+
+        try {
+            Files.copy(file, backup, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            System.err.println("[Inventory Slots] Failed to back up damaged config: " + e.getMessage());
+        }
+    }
+
+    private void read(JsonObject json) {
+        enabled = value(json, "enabled", enabled, JsonElement::getAsBoolean);
+        float scale = value(json, "textScale", textScale, JsonElement::getAsFloat);
+        if (Float.isFinite(scale)) {
+            textScale = Math.max(0.1f, Math.min(1.0f, scale));
+        } else {
+            textScale = 0.5f;
+        }
+
+        textColor = 0xFF000000 | value(json, "textColor", textColor, JsonElement::getAsInt);
+        textAnchor = value(json, "textAnchor", textAnchor, v -> TextAnchor.valueOf(v.getAsString()));
+        textShadow = value(json, "textShadow", textShadow, JsonElement::getAsBoolean);
+        hotbarNumbers = value(json, "hotbarNumbers", hotbarNumbers, JsonElement::getAsBoolean);
+        hotbarOnly = value(json, "hotbarOnly", hotbarOnly, JsonElement::getAsBoolean);
+        widgetNumbers = value(json, "widgetNumbers", widgetNumbers, JsonElement::getAsBoolean);
+        inventoryScreen = value(json, "inventoryScreen", inventoryScreen, JsonElement::getAsBoolean);
+        creativeInventory = value(json, "creativeInventory", creativeInventory, JsonElement::getAsBoolean);
+        containerSlots = value(json, "containerSlots", containerSlots, JsonElement::getAsBoolean);
+        playerInventoryInContainers = value(json, "playerInventoryInContainers", playerInventoryInContainers, JsonElement::getAsBoolean);
+        playerHotbarInContainers = value(json, "playerHotbarInContainers", playerHotbarInContainers, JsonElement::getAsBoolean);
+        disabledMenuTypes = value(json, "disabledMenuTypes", disabledMenuTypes, v -> {
+            Set<String> result = new LinkedHashSet<>();
+            for (JsonElement element : v.getAsJsonArray()) {
+                result.add(element.getAsString());
+            }
+
+            return result;
+        });
+        excludedScreens = value(json, "excludedScreens", excludedScreens, v -> {
+            Set<ScreenRule> result = new LinkedHashSet<>();
+            for (JsonElement element : v.getAsJsonArray()) {
+                ScreenRule rule = GSON.fromJson(element, ScreenRule.class);
+                if (rule != null && rule.menuType() != null && rule.title() != null) {
+                    result.add(rule);
+                }
+            }
+            return result;
+        });
+    }
+
+    private static <T> T value(JsonObject json, String key, T fallback, Function<JsonElement, T> parser) {
+        if (!json.has(key) || json.get(key).isJsonNull()) {
+            return fallback;
+        }
+
+        try {
+            return parser.apply(json.get(key));
+        } catch (RuntimeException e) {
+            System.err.println("[Inventory Slots] Ignoring invalid option: " + key);
+            return fallback;
+        }
+    }
 }

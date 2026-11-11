@@ -3,7 +3,7 @@
 build/
 
 # Fabric API generated files
-fabric.mod.json
+/fabric.mod.json
 fabric.mod.json.lock
 
 # IntelliJ IDEA

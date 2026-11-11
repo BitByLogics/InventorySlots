@@ -1,6 +1,7 @@
 package net.bitbylogic.inventoryslots.client.mixin;
 
 import net.bitbylogic.inventoryslots.client.SlotLabelRenderer;
+import net.bitbylogic.inventoryslots.client.SlotVisibility;
 import net.bitbylogic.inventoryslots.config.Config;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
@@ -8,6 +9,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.Element;
 import net.minecraft.client.gui.ParentElement;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.widget.ClickableWidget;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -21,11 +23,15 @@ public abstract class ScreenWidgetMixin {
 
     @Inject(method = "renderWithTooltip", at = @At("TAIL"))
     private void onRenderWithTooltip(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-        if (!Config.INSTANCE.enabled || !Config.INSTANCE.widgetNumbers) {
+        if (!Config.INSTANCE.enabled || !Config.INSTANCE.widgetNumbers || Config.INSTANCE.hotbarOnly) {
             return;
         }
 
         Screen screen = (Screen) (Object) this;
+
+        if (screen instanceof HandledScreen<?> container && !SlotVisibility.screenAllowed(container)) {
+            return;
+        }
 
         context.createNewRootLayer();
         renderChildren(context, MinecraftClient.getInstance().textRenderer, screen.children());

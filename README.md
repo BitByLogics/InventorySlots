@@ -16,11 +16,16 @@
 
 ## ✨ Features
 
-- Toggle inventory slot overlays client-side
+- Toggle inventory slot overlays client-side, including while an inventory is open
+- One-click **Containers only** preset
+- Separate visibility for containers, your own inventory, creative tabs, player rows in containers and the player hotbar in containers
+- Enable or disable each registered inventory type (chests, furnaces, workstations, modded inventories, and more)
+- Exclude specific menu titles without disabling every chest; useful for server menus
 - Customize scale, color, anchor point, and shadow
 - In-game config GUI
-- Real-time preview and hotkey toggles
+- Real-time preview and freely assignable keyboard/mouse shortcuts
 - Persistent config saved between sessions
+- English and German settings
 
 ---
 
@@ -63,13 +68,16 @@
 
 ## 🛠 Configuration
 
-You can access the InventorySlots config screen through Mod Menu. It supports:
+Press **END** to open the settings, including from an open inventory. The settings have four tabs:
 
-- **Enabled** (true/false)
-- **Scale** (0.25–2.0)
-- **Color** (Hex input or slider)
-- **Anchor** (Top-left, center, bottom-right, etc.)
-- **Text Shadow** (Toggle)
+- **Visibility:** master switch, the **Containers only** preset, and independent switches for container slots, your survival inventory, creative inventory, player rows beneath containers, the player hotbar beneath containers, HUD hotbar numbers, widget numbers, and the legacy HUD-only mode.
+- **Appearance:** scale (0.1–1.0), color palette, text anchor, shadow, and a live preview.
+- **Inventories:** enable/disable entire inventory types. Registered modded types appear automatically. Unregistered custom types appear when you open settings from that inventory. A type disabled here hides all its slot numbers, including player slots.
+- **Excluded menus:** open settings from a container and click its title to exclude or allow it. Remove saved exclusions here as well. Rules match the exact visible title and inventory type, across all servers; different titles remain independent. Dynamic menu titles need separate rules. Minecraft does not tell a client mod whether a chest-shaped interface is a physical chest or a server menu, so title rules provide explicit control.
+
+For numbers **only in the upper container**, select **Containers only**. This enables chest/furnace/etc. slots and hides the player inventory below, the survival and creative inventory screens, HUD numbers, and widget numbers. Appearance and explicit exclusions are preserved. Existing installations retain their previous settings until you select the preset.
+
+Filters hide labels without renumbering the remaining slots: numbers still identify the actual menu slot IDs, starting at zero. HUD hotbar numbers remain 0–8.
 
 The config file is located at:
 
@@ -86,7 +94,11 @@ The config file is located at:
 | Toggle Slots | `HOME`      |
 | Open Options | `END`       |
 
-> You can rebind these in Minecraft's Controls menu.
+Additional, initially **unbound** actions toggle container slots, player rows in containers, the player hotbar in containers, your own inventory screen, creative inventory, HUD numbers, widget numbers, the current menu title, and the current inventory type.
+
+Assign keys or mouse buttons under **Options → Controls → Key Binds → Inventory Slots**, or use the **Key bindings** button in this mod's settings. Inventory shortcuts work while a container is open. Focused search/text fields keep their normal input. A short action-bar message confirms changes; changes are saved immediately. The master switch must be on, and other filters still apply when you enable an individual option.
+
+The two current-menu shortcuts require an open inventory. They toggle an exclusion rule; allowing a rule again does not override other disabled visibility settings.
 
 ---
 
@@ -101,9 +113,21 @@ The config file is located at:
 
 ## 🧩 Compatibility
 
-- Minecraft: **1.20+**
+- This branch: Minecraft **1.21.11**, Java **21**
 - Loader: **Fabric**
 - Required Mods: [Fabric API](https://modrinth.com/mod/fabric-api)
+
+---
+
+## Development and verification
+
+```powershell
+.\gradlew.bat clean build
+```
+
+The build runs configuration, migration and visibility unit tests. Test code is not included in the release JAR.
+
+The installable file is `build/libs/inventoryslots-2.2.0+1.21.11.jar` (the `-sources.jar` is for development).
 
 ---
 
