@@ -7,15 +7,23 @@ import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static net.bitbylogic.inventoryslots.config.Config.ScreenKind.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static net.bitbylogic.inventoryslots.config.Config.ScreenKind.CONTAINER;
+import static net.bitbylogic.inventoryslots.config.Config.ScreenKind.CREATIVE;
+import static net.bitbylogic.inventoryslots.config.Config.ScreenKind.INVENTORY;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ConfigTest {
-    @TempDir Path directory;
-    private Path file;
-    private Config config;
+
     private static final String CHEST = "minecraft:generic_9x6";
     private static final String FURNACE = "minecraft:furnace";
+
+    @TempDir Path directory;
+
+    private Path file;
+    private Config config;
 
     @BeforeEach
     void setUp() {

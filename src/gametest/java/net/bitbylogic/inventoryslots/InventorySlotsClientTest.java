@@ -8,6 +8,7 @@ import net.bitbylogic.inventoryslots.config.Config;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.ContainerScreen;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
@@ -26,7 +27,7 @@ public class InventorySlotsClientTest implements FabricClientGameTest {
         try (var world = context.worldBuilder().create()) {
             context.runOnClient(client -> Config.INSTANCE.containersOnly());
             context.setScreen(() -> {
-                var client = net.minecraft.client.Minecraft.getInstance();
+                var client = Minecraft.getInstance();
                 var menu = ChestMenu.sixRows(1, client.player.getInventory());
                 client.player.containerMenu = menu;
                 return new ContainerScreen(menu, client.player.getInventory(), Component.literal("Test Chest"));
@@ -73,7 +74,7 @@ public class InventorySlotsClientTest implements FabricClientGameTest {
             assertVisibleSlots(context, 54);
 
             context.setScreen(() -> {
-                var client = net.minecraft.client.Minecraft.getInstance();
+                var client = Minecraft.getInstance();
                 var menu = new FurnaceMenu(2, client.player.getInventory());
                 client.player.containerMenu = menu;
                 return new FurnaceScreen(menu, client.player.getInventory(), Component.literal("Test Furnace"));
@@ -83,14 +84,14 @@ public class InventorySlotsClientTest implements FabricClientGameTest {
             context.runOnClient(client -> Config.INSTANCE.toggleMenuType("minecraft:furnace"));
             assertVisibleSlots(context, 0);
 
-            context.setScreen(() -> new InventoryScreen(net.minecraft.client.Minecraft.getInstance().player));
+            context.setScreen(() -> new InventoryScreen(Minecraft.getInstance().player));
             assertVisibleSlots(context, 0);
             context.takeScreenshot("hidden-player-inventory");
             context.runOnClient(client -> Config.INSTANCE.inventoryScreen = true);
             assertVisibleSlots(context, 46);
 
             context.setScreen(() -> {
-                var client = net.minecraft.client.Minecraft.getInstance();
+                var client = Minecraft.getInstance();
                 client.gameMode.setLocalMode(GameType.CREATIVE);
                 return new CreativeModeInventoryScreen(client.player, client.player.level().enabledFeatures(), false);
             });
