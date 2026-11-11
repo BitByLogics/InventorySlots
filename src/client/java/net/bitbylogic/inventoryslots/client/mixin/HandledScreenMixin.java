@@ -1,7 +1,7 @@
 package net.bitbylogic.inventoryslots.client.mixin;
 
 import net.bitbylogic.inventoryslots.client.SlotLabelRenderer;
-import net.bitbylogic.inventoryslots.config.Config;
+import net.bitbylogic.inventoryslots.client.SlotVisibility;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -27,11 +27,13 @@ public abstract class HandledScreenMixin<T extends AbstractContainerMenu> extend
 
     @Inject(method = "extractSlot", at = @At("TAIL"))
     private void onExtractSlot(GuiGraphicsExtractor graphics, Slot slot, int mouseX, int mouseY, CallbackInfo ci) {
-        if (!Config.INSTANCE.enabled || Config.INSTANCE.hotbarOnly) {
+        AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) (Object) this;
+
+        if (!SlotVisibility.shouldShow(screen, slot)) {
             return;
         }
 
-        SlotLabelRenderer.draw(graphics, getFont(), String.valueOf(menu.slots.indexOf(slot)), slot.x, slot.y, 16, 16);
+        SlotLabelRenderer.draw(graphics, getFont(), String.valueOf(SlotVisibility.slotNumber(screen, slot)), slot.x, slot.y, 16, 16);
     }
 
 }

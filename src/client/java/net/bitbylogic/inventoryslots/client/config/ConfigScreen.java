@@ -1,273 +1,333 @@
 package net.bitbylogic.inventoryslots.client.config;
 
+import net.bitbylogic.inventoryslots.client.InventorySlotsClient;
+import net.bitbylogic.inventoryslots.client.SlotLabelRenderer;
+import net.bitbylogic.inventoryslots.client.SlotVisibility;
 import net.bitbylogic.inventoryslots.config.Config;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.options.controls.KeyBindsScreen;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.ARGB;
-import org.joml.Matrix3x2fStack;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.TreeSet;
+import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 
 public class ConfigScreen extends Screen {
 
-    private static final Component ON_TEXT = Component.literal("ON").withStyle(ChatFormatting.GREEN);
-    private static final Component OFF_TEXT = Component.literal("OFF").withStyle(ChatFormatting.RED);
-
     private final Screen parent;
+    private final Config config = Config.INSTANCE;
 
-    private Button anchorButton;
-    private Button colorButton;
-    private Button shadowButton;
-    private Button hotbarButton;
-    private Button hotbarOnlyButton;
-    private Button widgetButton;
-    private AbstractSliderButton scaleSlider;
-
-    private int anchorIndex;
-    private int colorIndex = 0;
+    private int tab;
+    private int page;
+    private int left;
+    private int contentWidth;
+    private int columnWidth;
 
     public ConfigScreen(Screen parent) {
-        super(Component.literal("Inventory Slots Config"));
+        super(Component.translatable("inventory_slots.config.title"));
 
         this.parent = parent;
-
-        anchorIndex = Config.INSTANCE.textAnchor.ordinal();
-
-        for (int i = 0; i < Config.COLOR_PALETTE.length; i++) {
-            if (Config.COLOR_PALETTE[i] == Config.INSTANCE.textColor) {
-                colorIndex = i;
-                break;
-            }
-        }
     }
 
     @Override
     protected void init() {
-        int optionWidth = 180;
-        int optionHeight = 20;
+        contentWidth = Math.min(440, width - 20);
+        left = (width - contentWidth) / 2;
+        columnWidth = (contentWidth - 6) / 2;
 
-        int leftX = ((width - 5) >>> 1) - optionWidth;
-        int rightX = (width + 5) >>> 1;
+        String[] tabs = {"general", "appearance", "types", "exclusions"};
+        int tabWidth = (contentWidth - 9) / 4;
 
-        int y = 60;
+        for (int i = 0; i < tabs.length; i++) {
+            int selected = i;
 
-        anchorButton = Button.builder(
-                Component.literal("Anchor: " + Config.INSTANCE.textAnchor.getDisplayName()),
-                (button) -> {
-                    anchorIndex = (anchorIndex + 1) % Config.TextAnchor.values().length;
-                    Config.INSTANCE.textAnchor = Config.TextAnchor.values()[anchorIndex];
+            Button button = button(Component.translatable("inventory_slots.tab." + tabs[i]),
+                left + i * (tabWidth + 3), 34, tabWidth, () -> {
+                    tab = selected;
+                    page = 0;
+                    rebuildWidgets();
+                });
+            button.active = tab != i;
+        }
 
-                    button.setMessage(Component.literal("Anchor: " + Config.INSTANCE.textAnchor.getDisplayName()));
-                }).bounds(leftX, y, optionWidth, optionHeight).build();
-        addRenderableWidget(anchorButton);
+        switch (tab) {
+            case 0 -> general();
+            case 1 -> appearance();
+            case 2 -> types();
+            case 3 -> exclusions();
+            default -> throw new IllegalStateException("Unknown tab: " + tab);
+        }
 
-        colorButton = Button.builder(
-                Component.literal("Color: " + Config.INSTANCE.getColorName()),
-                (button) -> {
-                    colorIndex = (colorIndex + 1) % Config.COLOR_PALETTE.length;
-                    Config.INSTANCE.textColor = Config.COLOR_PALETTE[colorIndex];
+        int footerWidth = (contentWidth - 12) / 3;
 
-                    button.setMessage(Component.literal("Color: " + Config.INSTANCE.getColorName()));
-                }).bounds(rightX, y, optionWidth, optionHeight).build();
-        addRenderableWidget(colorButton);
-        y += 25;
+        button(Component.translatable("inventory_slots.reset"), left, height - 26, footerWidth, () -> {
+            config.reset();
+            page = 0;
+            rebuildWidgets();
+        }).setTooltip(Tooltip.create(Component.translatable("inventory_slots.reset.tooltip")));
 
-        shadowButton = Button.builder(
-                Component.literal("Shadow: ").append(Config.INSTANCE.textShadow ? ON_TEXT : OFF_TEXT),
-                (button) -> {
-                    Config.INSTANCE.textShadow = !Config.INSTANCE.textShadow;
+        button(Component.translatable("inventory_slots.keybinds"), left + footerWidth + 6,
+            height - 26, footerWidth,
+            () -> minecraft.setScreenAndShow(new KeyBindsScreen(this, minecraft.options)));
 
-                    boolean shadowEnabled = Config.INSTANCE.textShadow;
+        button(Component.translatable("gui.done"), left + 2 * (footerWidth + 6),
+            height - 26, footerWidth, this::onClose);
+    }
 
-                    shadowButton.setMessage(Component.literal("Shadow: ")
-                            .append(shadowEnabled ? ON_TEXT : OFF_TEXT));
-                }).bounds(leftX, y, optionWidth, optionHeight).build();
-        addRenderableWidget(shadowButton);
+    private void general() {
+        toggle("enabled", 0, 0, () -> config.enabled, v -> config.enabled = v);
 
-        scaleSlider = new AbstractSliderButton(rightX, y, optionWidth, optionHeight,
-                Component.literal("Scale: " + String.format("%.2f", Config.INSTANCE.textScale)),
-                (Config.INSTANCE.textScale - 0.1) / 0.9) {
+        button(Component.translatable("inventory_slots.containers_only"), right(), 64, columnWidth, () -> {
+            config.containersOnly();
+            rebuildWidgets();
+        }).setTooltip(Tooltip.create(Component.translatable("inventory_slots.containers_only.tooltip")));
 
+        toggle("container_slots", 1, 0, () -> config.containerSlots, v -> config.containerSlots = v);
+        toggle("inventory_screen", 1, 1, () -> config.inventoryScreen, v -> config.inventoryScreen = v);
+        toggle("player_inventory", 2, 0, () -> config.playerInventoryInContainers,
+            v -> config.playerInventoryInContainers = v);
+        toggle("player_hotbar", 2, 1, () -> config.playerHotbarInContainers, v -> config.playerHotbarInContainers = v);
+        toggle("creative", 3, 0, () -> config.creativeInventory, v -> config.creativeInventory = v);
+        toggle("hotbar", 3, 1, () -> config.hotbarNumbers, v -> {
+            config.hotbarNumbers = v;
+            if (!v) {
+                config.hotbarOnly = false;
+            }
+            rebuildWidgets();
+        });
+        toggle("widgets", 4, 0, () -> config.widgetNumbers, v -> config.widgetNumbers = v);
+        toggle("hotbar_only", 4, 1, () -> config.hotbarOnly, v -> {
+            config.hotbarOnly = v;
+            if (v) {
+                config.hotbarNumbers = true;
+            }
+            rebuildWidgets();
+        });
+    }
+
+    private void appearance() {
+        button(option("anchor", Component.translatable(config.textAnchor.translationKey())),
+            left, 64, columnWidth, () -> {
+                var anchors = Config.TextAnchor.values();
+                config.textAnchor = anchors[(config.textAnchor.ordinal() + 1) % anchors.length];
+                rebuildWidgets();
+            });
+
+        button(option("color", Component.translatable(config.colorTranslationKey())),
+            right(), 64, columnWidth, () -> {
+                int index = -1;
+
+                for (int i = 0; i < Config.COLOR_PALETTE.length; i++) {
+                    if (Config.COLOR_PALETTE[i] == config.textColor) {
+                        index = i;
+                    }
+                }
+
+                config.textColor = Config.COLOR_PALETTE[(index + 1) % Config.COLOR_PALETTE.length];
+                rebuildWidgets();
+            });
+
+        toggle("shadow", 1, 0, () -> config.textShadow, v -> config.textShadow = v);
+
+        addRenderableWidget(new AbstractSliderButton(right(), 88, columnWidth, 20,
+            option("scale", Component.literal(String.format(Locale.ROOT, "%.2f", config.textScale))),
+            (config.textScale - 0.1) / 0.9) {
             @Override
             protected void updateMessage() {
-                double value = 0.1 + (this.value * 0.9);
-                Config.INSTANCE.textScale = (float) value;
-
-                setMessage(Component.literal("Scale: " + String.format("%.2f", value)));
+                setMessage(option("scale", Component.literal(String.format(Locale.ROOT, "%.2f", 0.1 + value * 0.9))));
             }
 
             @Override
-            protected void applyValue() {}
-        };
-        addRenderableWidget(scaleSlider);
-        y += 25;
+            protected void applyValue() {
+                config.textScale = (float) (0.1 + value * 0.9);
+            }
+        });
+    }
 
-        hotbarButton = Button.builder(
-                Component.literal("Hotbar Numbers: ").append(Config.INSTANCE.hotbarNumbers ? ON_TEXT : OFF_TEXT),
-                (button) -> {
-                    Config.INSTANCE.hotbarNumbers = !Config.INSTANCE.hotbarNumbers;
+    private void types() {
+        TreeSet<String> ids = new TreeSet<>();
 
-                    boolean hotbarNumbers = Config.INSTANCE.hotbarNumbers;
+        BuiltInRegistries.MENU.keySet().forEach(id -> ids.add(id.toString()));
+        ids.add("net.minecraft.world.inventory.HorseInventoryMenu");
+        ids.addAll(config.disabledMenuTypes);
 
-                    hotbarButton.setMessage(Component.literal("Hotbar Numbers: ")
-                            .append(hotbarNumbers ? ON_TEXT : OFF_TEXT));
-                }).bounds(leftX, y, optionWidth, optionHeight).build();
-        addRenderableWidget(hotbarButton);
+        if (parent instanceof AbstractContainerScreen<?> inventory) {
+            ids.add(SlotVisibility.menuType(inventory));
+        }
 
-        hotbarOnlyButton = Button.builder(
-                Component.literal("Hotbar Only: ").append(Config.INSTANCE.hotbarOnly ? ON_TEXT : OFF_TEXT),
-                (button) -> {
-                    Config.INSTANCE.hotbarOnly = !Config.INSTANCE.hotbarOnly;
+        if (!config.disabledMenuTypes.contains("inventory_slots:player")) {
+            ids.remove("inventory_slots:player");
+        }
 
-                    boolean hotbarOnly = Config.INSTANCE.hotbarOnly;
+        if (!config.disabledMenuTypes.contains("inventory_slots:creative")) {
+            ids.remove("inventory_slots:creative");
+        }
 
-                    if(!Config.INSTANCE.hotbarNumbers) {
-                        Config.INSTANCE.hotbarNumbers = true;
-                        hotbarButton.setMessage(Component.literal("Hotbar Numbers: ").append(ON_TEXT));
-                    }
+        List<String> entries = new ArrayList<>(ids);
+        int pageSize = rows(64) * 2;
 
-                    hotbarOnlyButton.setMessage(Component.literal("Hotbar Only: ")
-                            .append(hotbarOnly ? ON_TEXT : OFF_TEXT));
-                }).bounds(rightX, y, optionWidth, optionHeight).build();
-        addRenderableWidget(hotbarOnlyButton);
-        y += 25;
+        paginate(entries.size(), pageSize);
 
-        widgetButton = Button.builder(
-                Component.literal("Widget Numbers: ").append(Config.INSTANCE.widgetNumbers ? ON_TEXT : OFF_TEXT),
-                (button) -> {
-                    Config.INSTANCE.widgetNumbers = !Config.INSTANCE.widgetNumbers;
+        for (int i = page * pageSize; i < Math.min(entries.size(), (page + 1) * pageSize); i++) {
+            String id = entries.get(i);
+            int position = i - page * pageSize;
+            Component name = menuName(id);
+            int entryX = left;
 
-                    widgetButton.setMessage(Component.literal("Widget Numbers: ")
-                            .append(Config.INSTANCE.widgetNumbers ? ON_TEXT : OFF_TEXT));
-                }).bounds(leftX, y, optionWidth, optionHeight).build();
-        addRenderableWidget(widgetButton);
+            if (position % 2 != 0) {
+                entryX = right();
+            }
 
-        int bottomY = height - 25;
-        int finalY = y;
+            Button entry = button(status(name, !config.disabledMenuTypes.contains(id)),
+                entryX, 64 + position / 2 * 24, columnWidth, () -> {
+                    config.toggleMenuType(id);
+                    rebuildWidgets();
+                });
 
-        addRenderableWidget(Button.builder(
-                Component.literal("Reset"),
-                (button) -> {
-                    Config.INSTANCE.textScale = 0.5f;
-                    Config.INSTANCE.textAnchor = Config.TextAnchor.TOP_LEFT;
-                    Config.INSTANCE.textColor = 0xFFFFFF;
-                    Config.INSTANCE.textShadow = false;
-                    Config.INSTANCE.hotbarNumbers = false;
-                    Config.INSTANCE.hotbarOnly = false;
-                    Config.INSTANCE.widgetNumbers = false;
+            entry.setTooltip(Tooltip.create(name.copy().append("\n" + id + "\n")
+                .append(Component.translatable("inventory_slots.types.tooltip"))));
+        }
+    }
 
-                    anchorIndex = 0;
-                    colorIndex = 0;
+    private void exclusions() {
+        Button current = button(Component.translatable("inventory_slots.current_screen"), left, 64, contentWidth,
+            () -> {
+                if (parent instanceof AbstractContainerScreen<?> inventory) {
+                    config.toggleScreen(SlotVisibility.menuType(inventory), parent.getTitle().getString());
+                    rebuildWidgets();
+                }
+            });
 
-                    removeWidget(scaleSlider);
+        if (parent instanceof AbstractContainerScreen<?> inventory) {
+            boolean allowed = !config.excludedScreens.contains(new Config.ScreenRule(
+                SlotVisibility.menuType(inventory), parent.getTitle().getString()));
+            current.setMessage(status(parent.getTitle(), allowed));
+            current.setTooltip(Tooltip.create(Component.translatable("inventory_slots.current_screen.tooltip")));
+        } else {
+            current.active = false;
+            current.setTooltip(Tooltip.create(Component.translatable("inventory_slots.open_inventory")));
+        }
 
-                    scaleSlider = new AbstractSliderButton(leftX, finalY, optionWidth, optionHeight,
-                            Component.literal("Scale: " + String.format("%.2f", Config.INSTANCE.textScale)),
-                            (Config.INSTANCE.textScale - 0.1) / 0.9) {
-                        @Override
-                        protected void updateMessage() {
-                            double value = 0.1 + (this.value * 0.9);
-                            Config.INSTANCE.textScale = (float) value;
-                            setMessage(Component.literal("Scale: " + String.format("%.2f", value)));
-                        }
+        List<Config.ScreenRule> entries = new ArrayList<>(config.excludedScreens);
+        int pageSize = rows(92);
 
-                        @Override
-                        protected void applyValue() {}
-                    };
+        paginate(entries.size(), pageSize);
 
-                    addRenderableWidget(scaleSlider);
+        for (int i = page * pageSize; i < Math.min(entries.size(), (page + 1) * pageSize); i++) {
+            Config.ScreenRule rule = entries.get(i);
+            button(Component.translatable("inventory_slots.remove_exclusion", rule.title()),
+                left, 92 + (i - page * pageSize) * 24, contentWidth, () -> {
+                    config.excludedScreens.remove(rule);
+                    rebuildWidgets();
+                }).setTooltip(Tooltip.create(Component.literal(rule.menuType() + "\n" + rule.title())));
+        }
+    }
 
-                    anchorButton.setMessage(Component.literal("Anchor: " + Config.INSTANCE.textAnchor.getDisplayName()));
-                    colorButton.setMessage(Component.literal("Color: " + Config.INSTANCE.getColorName()));
+    private int rows(int startY) {
+        return Math.max(1, (height - 60 - startY) / 24);
+    }
 
-                    boolean shadowEnabled = Config.INSTANCE.textShadow;
-                    boolean hotbarEnabled = Config.INSTANCE.hotbarNumbers;
-                    boolean hotbarOnly = Config.INSTANCE.hotbarOnly;
+    private int right() {
+        return left + columnWidth + 6;
+    }
 
-                    shadowButton.setMessage(Component.literal("Shadow: ").append(shadowEnabled ? ON_TEXT : OFF_TEXT));
-                    hotbarButton.setMessage(Component.literal("Hotbar Numbers: ").append(hotbarEnabled ? ON_TEXT : OFF_TEXT));
-                    hotbarOnlyButton.setMessage(Component.literal("Hotbar Only: ").append(hotbarOnly ? ON_TEXT : OFF_TEXT));
-                    widgetButton.setMessage(Component.literal("Widget Numbers: ").append(Config.INSTANCE.widgetNumbers ? ON_TEXT : OFF_TEXT));
-                }).bounds(leftX, bottomY, optionWidth, optionHeight).build());
+    private void paginate(int count, int pageSize) {
+        int pages = Math.max(1, (count + pageSize - 1) / pageSize);
+        page = Math.min(page, pages - 1);
 
-        addRenderableWidget(Button.builder(
-                Component.literal("Done"),
-                (button) -> {
-                    Config.INSTANCE.save();
+        button(Component.literal("<"), left, height - 54, 40, () -> {
+            page--;
+            rebuildWidgets();
+        }).active = page > 0;
 
-                    if(minecraft == null) {
-                        return;
-                    }
+        button(Component.literal(">"), left + contentWidth - 40, height - 54, 40, () -> {
+            page++;
+            rebuildWidgets();
+        }).active = page + 1 < pages;
+    }
 
-                    minecraft.setScreenAndShow(parent);
-                }).bounds(rightX, bottomY, optionWidth, optionHeight).build());
+    private void toggle(String key, int row, int column, BooleanSupplier getter, Consumer<Boolean> setter) {
+        Component name = Component.translatable("inventory_slots.option." + key);
+        int entryX = left;
+
+        if (column != 0) {
+            entryX = right();
+        }
+
+        Button entry = button(status(name, getter.getAsBoolean()), entryX,
+            64 + row * 24, columnWidth, () -> {
+                setter.accept(!getter.getAsBoolean());
+                rebuildWidgets();
+            });
+        entry.setTooltip(Tooltip.create(Component.translatable("inventory_slots.option." + key + ".tooltip")));
+    }
+
+    private Button button(Component label, int x, int y, int buttonWidth, Runnable action) {
+        return addRenderableWidget(Button.builder(label, button -> action.run()).bounds(x, y, buttonWidth, 20).build());
+    }
+
+    private static Component option(String key, Component value) {
+        return Component.translatable("inventory_slots.option." + key).append(": ").append(value);
+    }
+
+    private static Component status(Component label, boolean enabled) {
+        return label.copy().append(": ").append(InventorySlotsClient.onOff(enabled));
+    }
+
+    private static Component menuName(String id) {
+        String key = "inventory_slots.menu." + id.replace(':', '.');
+        return Component.translatableWithFallback(key, id);
     }
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
 
-        graphics.centeredText(font, title, width / 2, 20, ARGB.opaque(0xFFFFFF));
-        graphics.centeredText(font,
-                Component.literal("Change Various Options For Inventory Slots"),
-                width / 2, 40, ARGB.opaque(0xAAAAAA));
+        graphics.centeredText(font, title, width / 2, 15, 0xFFFFFFFF);
 
-        int slotSize = 18;
-        int slotContentSize = 16;
-        int slotsPerRow = 3;
-        int slotSpacing = 2;
-        int totalWidth = (slotSize * slotsPerRow) + (slotSpacing * (slotsPerRow - 1));
-        int startX = width / 2 - totalWidth / 2;
+        if (tab == 1) {
+            int y = 134;
+            graphics.centeredText(font, Component.translatable("inventory_slots.preview"), width / 2, y - 14,
+                0xFFFFFFFF);
 
-        int previewStartY = height / 2 + 50;
-        graphics.centeredText(font, Component.literal("Preview"), width / 2, previewStartY - 12, ARGB.opaque(0xFFFFFF));
+            for (int i = 0; i < 6; i++) {
+                int x = width / 2 - 29 + (i % 3) * 20;
+                int slotY = y + i / 3 * 20;
 
-        for (int row = 0; row < 2; row++) {
-            for (int col = 0; col < slotsPerRow; col++) {
-                int slotX = startX + col * (slotSize + slotSpacing);
-                int slotY = previewStartY + row * (slotSize + slotSpacing);
+                graphics.fill(x, slotY, x + 18, slotY + 18, 0xFF8B8B8B);
+                graphics.fill(x + 1, slotY + 1, x + 17, slotY + 17, 0xFF373737);
+                SlotLabelRenderer.draw(graphics, font, String.valueOf(i), x + 1, slotY + 1, 16, 16);
+            }
+        }
 
-                graphics.fill(slotX, slotY, slotX + slotSize, slotY + slotSize, 0xFF8B8B8B);
-                graphics.fill(slotX + 1, slotY + 1, slotX + slotSize - 1, slotY + slotSize - 1, 0xFF373737);
-
-                int slotIndex = row * slotsPerRow + col;
-
-                String previewText = String.valueOf(slotIndex);
-
-                float scaledTextWidth = font.width(previewText) * Config.INSTANCE.textScale;
-                float scaledTextHeight = font.lineHeight * Config.INSTANCE.textScale;
-                float textDrawX = Config.INSTANCE.textAnchor.getOffsetX(scaledTextWidth, slotContentSize);
-                float textDrawY = Config.INSTANCE.textAnchor.getOffsetY(scaledTextHeight, slotContentSize);
-
-                Matrix3x2fStack matrices = graphics.pose();
-
-                matrices.pushMatrix();
-                matrices.translate(slotX + 1 + textDrawX, slotY + 1 + textDrawY);
-                matrices.scale(Config.INSTANCE.textScale, Config.INSTANCE.textScale);
-
-                graphics.text(font, previewText, 0, 0, ARGB.opaque(Config.INSTANCE.textColor), Config.INSTANCE.textShadow);
-
-                matrices.popMatrix();
+        if (tab == 2 || tab == 3) {
+            graphics.centeredText(font, Component.translatable("inventory_slots.page", page + 1),
+                width / 2, height - 48, 0xFFAAAAAA);
+            if (tab == 3 && config.excludedScreens.isEmpty()) {
+                graphics.centeredText(font, Component.translatable("inventory_slots.no_exclusions"),
+                    width / 2, 100, 0xFFAAAAAA);
             }
         }
     }
 
     @Override
-    public boolean shouldCloseOnEsc() {
-        return true;
+    public void removed() {
+        config.save();
     }
 
     @Override
     public void onClose() {
-        Config.INSTANCE.save();
-
-        if(minecraft == null) {
-            return;
-        }
-
+        config.save();
         minecraft.setScreenAndShow(parent);
     }
-
 }
