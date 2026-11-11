@@ -68,10 +68,14 @@ class ConfigTest {
     @Test
     void masterAndLegacyHudOnlySwitchOverrideAllInventoryFilters() {
         config.enabled = false;
-        for (var kind : Config.ScreenKind.values()) assertFalse(show(kind, CHEST, false, false));
+        for (var kind : Config.ScreenKind.values()) {
+            assertFalse(show(kind, CHEST, false, false));
+        }
         config.enabled = true;
         config.hotbarOnly = true;
-        for (var kind : Config.ScreenKind.values()) assertFalse(show(kind, CHEST, true, true));
+        for (var kind : Config.ScreenKind.values()) {
+            assertFalse(show(kind, CHEST, true, true));
+        }
     }
 
     @Test
@@ -192,6 +196,25 @@ class ConfigTest {
         assertDoesNotThrow(loaded::load);
         assertFalse(loaded.enabled);
         assertEquals(damaged, Files.readString(file));
+        assertEquals(damaged, Files.readString(file.resolveSibling(file.getFileName() + ".bak")));
+    }
+
+    @Test
+    void savingAfterDamagedLoadKeepsTheBackup() throws Exception {
+        String damaged = "{this isn't json";
+        Files.writeString(file, damaged);
+        Config loaded = new Config(file);
+        loaded.load();
+        loaded.save();
+        assertEquals(damaged, Files.readString(file.resolveSibling(file.getFileName() + ".bak")));
+    }
+
+    @Test
+    void excludedScreenIsNotAllowed() {
+        config.enabled = true;
+        config.toggleScreen(CHEST, "Menu");
+        assertFalse(config.isScreenAllowed(CHEST, "Menu"));
+        assertTrue(config.isScreenAllowed(CHEST, "Other"));
     }
 
     @Test
@@ -201,7 +224,7 @@ class ConfigTest {
         config.toggleScreen(CHEST, "Menu");
         config.textShadow = false;
         config.reset();
-        assertFalse(config.enabled);
+        assertTrue(config.enabled);
         assertTrue(config.inventoryScreen);
         assertTrue(config.creativeInventory);
         assertTrue(config.playerInventoryInContainers);

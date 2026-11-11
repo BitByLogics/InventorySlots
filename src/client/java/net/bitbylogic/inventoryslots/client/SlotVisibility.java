@@ -9,7 +9,32 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 
 public final class SlotVisibility {
+
+    private static AbstractContainerScreen<?> cachedScreen;
+    private static String cachedType;
+    private static String cachedTitle;
+
     private SlotVisibility() {
+    }
+
+    private static void cache(AbstractContainerScreen<?> screen) {
+        if (cachedScreen == screen) {
+            return;
+        }
+
+        cachedScreen = screen;
+        cachedType = menuType(screen);
+        cachedTitle = screen.getTitle().getString();
+    }
+
+    public static boolean screenAllowed(AbstractContainerScreen<?> screen) {
+        cache(screen);
+
+        return Config.INSTANCE.isScreenAllowed(cachedType, cachedTitle);
+    }
+
+    public static int slotNumber(AbstractContainerScreen<?> screen, Slot slot) {
+        return screen.getMenu().slots.indexOf(slot);
     }
 
     public static Config.ScreenKind kind(AbstractContainerScreen<?> screen) {
@@ -35,15 +60,17 @@ public final class SlotVisibility {
                 return id.toString();
             }
         } catch (UnsupportedOperationException ignored) {
-            // Horse inventories and some modded menus do not have a registered MenuType.
         }
         return screen.getMenu().getClass().getName();
     }
 
     public static boolean shouldShow(AbstractContainerScreen<?> screen, Slot slot) {
+        cache(screen);
+
         boolean playerSlot = slot.container instanceof Inventory;
-        return slot.isActive() && Config.INSTANCE.shouldShowSlot(kind(screen), menuType(screen),
-            screen.getTitle().getString(), playerSlot,
-            playerSlot && Inventory.isHotbarSlot(slot.getContainerSlot()));
+        boolean hotbarSlot = playerSlot && Inventory.isHotbarSlot(slot.getContainerSlot());
+
+        return slot.isActive() && Config.INSTANCE.shouldShowSlot(kind(screen), cachedType, cachedTitle,
+            playerSlot, hotbarSlot);
     }
 }

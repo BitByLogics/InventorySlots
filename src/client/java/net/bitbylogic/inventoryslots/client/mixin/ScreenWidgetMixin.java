@@ -1,6 +1,7 @@
 package net.bitbylogic.inventoryslots.client.mixin;
 
 import net.bitbylogic.inventoryslots.client.SlotLabelRenderer;
+import net.bitbylogic.inventoryslots.client.SlotVisibility;
 import net.bitbylogic.inventoryslots.config.Config;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -8,6 +9,7 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.events.ContainerEventHandler;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -25,6 +27,10 @@ public abstract class ScreenWidgetMixin {
         }
 
         Screen screen = (Screen) (Object) this;
+
+        if (screen instanceof AbstractContainerScreen<?> container && !SlotVisibility.screenAllowed(container)) {
+            return;
+        }
 
         graphics.nextStratum();
         extractChildren(graphics, screen.getFont(), screen.children());

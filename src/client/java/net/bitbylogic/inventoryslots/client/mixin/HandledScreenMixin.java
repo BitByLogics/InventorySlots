@@ -27,11 +27,13 @@ public abstract class HandledScreenMixin<T extends AbstractContainerMenu> extend
 
     @Inject(method = "extractSlot", at = @At("TAIL"))
     private void onExtractSlot(GuiGraphicsExtractor graphics, Slot slot, int mouseX, int mouseY, CallbackInfo ci) {
-        if (!SlotVisibility.shouldShow((AbstractContainerScreen<?>) (Object) this, slot)) {
+        AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) (Object) this;
+
+        if (!SlotVisibility.shouldShow(screen, slot)) {
             return;
         }
 
-        SlotLabelRenderer.draw(graphics, getFont(), String.valueOf(slot.index), slot.x, slot.y, 16, 16);
+        SlotLabelRenderer.draw(graphics, getFont(), String.valueOf(SlotVisibility.slotNumber(screen, slot)), slot.x, slot.y, 16, 16);
     }
 
 }
