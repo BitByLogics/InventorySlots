@@ -19,10 +19,12 @@ import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+
 import java.util.HashSet;
 import java.util.Set;
 
 public class InventorySlotsClient implements ClientModInitializer {
+
     public static final KeyMapping.Category CATEGORY = KeyMapping.Category.register(
         Identifier.parse("inventory_slots:general"));
 
@@ -54,63 +56,85 @@ public class InventorySlotsClient implements ClientModInitializer {
 
     public static final KeyMapping OPEN_CONFIG = Action.CONFIG.key;
     public static final KeyMapping TOGGLE_SLOTS = Action.TOGGLE.key;
+
     private final Set<InputConstants.Key> heldScreenKeys = new HashSet<>();
 
     @Override
     public void onInitializeClient() {
         Config.INSTANCE.load();
+
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             for (Action action : Action.values()) {
                 boolean clicked = false;
+
                 while (action.key.consumeClick()) {
                     clicked = true;
                 }
-                if (client.gui.screen() == null && clicked && !action.down) {
-                    run(action, client, null);
-                }
+
+                boolean pressed = clicked && !action.down;
                 action.down = action.key.isDown();
+
+                if (client.gui.screen() != null || !pressed) {
+                    continue;
+                }
+
+                run(action, client, null);
             }
         });
 
         ScreenEvents.BEFORE_INIT.register((client, screen, width, height) -> {
-            if (!(screen instanceof AbstractContainerScreen<?>)
-                && !(screen instanceof TitleScreen) && !(screen instanceof PauseScreen)) {
+            if (!supportsHotkeys(screen)) {
                 return;
             }
+
             ScreenKeyboardEvents.allowKeyPress(screen).register((current, event) -> {
                 if (typing(current)) {
                     return true;
                 }
+
                 for (Action action : Action.values()) {
-                    if (!action.key.isUnbound() && action.key.matches(event)
-                        && applicable(action, current)) {
-                        if (heldScreenKeys.add(InputConstants.getKey(event))) {
-                            run(action, client, current);
-                        }
-                        return false;
+                    if (action.key.isUnbound() || !action.key.matches(event) || !applicable(action, current)) {
+                        continue;
                     }
+
+                    if (heldScreenKeys.add(InputConstants.getKey(event))) {
+                        run(action, client, current);
+                    }
+
+                    return false;
                 }
+
                 return true;
             });
+
             ScreenKeyboardEvents.allowKeyRelease(screen).register((current, event) -> {
                 heldScreenKeys.remove(InputConstants.getKey(event));
                 return true;
             });
+
             ScreenEvents.remove(screen).register(current -> heldScreenKeys.clear());
+
             ScreenMouseEvents.allowMouseClick(screen).register((current, event) -> {
                 if (typing(current)) {
                     return true;
                 }
+
                 for (Action action : Action.values()) {
-                    if (!action.key.isUnbound() && action.key.matchesMouse(event)
-                        && applicable(action, current)) {
-                        run(action, client, current);
-                        return false;
+                    if (action.key.isUnbound() || !action.key.matchesMouse(event) || !applicable(action, current)) {
+                        continue;
                     }
+
+                    run(action, client, current);
+                    return false;
                 }
+
                 return true;
             });
         });
+    }
+
+    private static boolean supportsHotkeys(Screen screen) {
+        return screen instanceof AbstractContainerScreen<?> || screen instanceof TitleScreen || screen instanceof PauseScreen;
     }
 
     private static boolean typing(Screen screen) {

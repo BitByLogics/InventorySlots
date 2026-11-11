@@ -13,14 +13,18 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.LinkedHashSet;
+import java.util.Locale;
 import java.util.Set;
 import java.util.function.Function;
 
 public class Config {
+
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+
     public static final Config INSTANCE = new Config();
 
     private final transient Path file;
+
     public boolean enabled = false;
     public float textScale = 0.5f;
     public int textColor = 0xFFFFFFFF;
@@ -63,7 +67,7 @@ public class Config {
         BOTTOM_LEFT, BOTTOM_CENTER, BOTTOM_RIGHT;
 
         public String translationKey() {
-            return "inventory_slots.anchor." + name().toLowerCase(java.util.Locale.ROOT);
+            return "inventory_slots.anchor." + name().toLowerCase(Locale.ROOT);
         }
 
         public float getOffsetX(float textWidth, int slotSize) {
