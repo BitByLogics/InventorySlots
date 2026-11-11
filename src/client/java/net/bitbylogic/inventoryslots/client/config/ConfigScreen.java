@@ -14,6 +14,7 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.options.controls.KeyBindsScreen;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -22,8 +23,10 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 public class ConfigScreen extends Screen {
+
     private final Screen parent;
     private final Config config = Config.INSTANCE;
+
     private int tab;
     private int page;
     private int left;
@@ -32,6 +35,7 @@ public class ConfigScreen extends Screen {
 
     public ConfigScreen(Screen parent) {
         super(Component.translatable("inventory_slots.config.title"));
+
         this.parent = parent;
     }
 
@@ -40,10 +44,13 @@ public class ConfigScreen extends Screen {
         contentWidth = Math.min(440, width - 20);
         left = (width - contentWidth) / 2;
         columnWidth = (contentWidth - 6) / 2;
+
         String[] tabs = {"general", "appearance", "types", "exclusions"};
         int tabWidth = (contentWidth - 9) / 4;
+
         for (int i = 0; i < tabs.length; i++) {
             int selected = i;
+
             Button button = button(Component.translatable("inventory_slots.tab." + tabs[i]),
                 left + i * (tabWidth + 3), 34, tabWidth, () -> {
                     tab = selected;
@@ -62,24 +69,29 @@ public class ConfigScreen extends Screen {
         }
 
         int footerWidth = (contentWidth - 12) / 3;
+
         button(Component.translatable("inventory_slots.reset"), left, height - 26, footerWidth, () -> {
             config.reset();
             page = 0;
             rebuildWidgets();
         }).setTooltip(Tooltip.create(Component.translatable("inventory_slots.reset.tooltip")));
+
         button(Component.translatable("inventory_slots.keybinds"), left + footerWidth + 6,
             height - 26, footerWidth,
             () -> minecraft.setScreenAndShow(new KeyBindsScreen(this, minecraft.options)));
+
         button(Component.translatable("gui.done"), left + 2 * (footerWidth + 6),
             height - 26, footerWidth, this::onClose);
     }
 
     private void general() {
         toggle("enabled", 0, 0, () -> config.enabled, v -> config.enabled = v);
+
         button(Component.translatable("inventory_slots.containers_only"), right(), 64, columnWidth, () -> {
             config.containersOnly();
             rebuildWidgets();
         }).setTooltip(Tooltip.create(Component.translatable("inventory_slots.containers_only.tooltip")));
+
         toggle("container_slots", 1, 0, () -> config.containerSlots, v -> config.containerSlots = v);
         toggle("inventory_screen", 1, 1, () -> config.inventoryScreen, v -> config.inventoryScreen = v);
         toggle("player_inventory", 2, 0, () -> config.playerInventoryInContainers,
@@ -110,18 +122,23 @@ public class ConfigScreen extends Screen {
                 config.textAnchor = anchors[(config.textAnchor.ordinal() + 1) % anchors.length];
                 rebuildWidgets();
             });
+
         button(option("color", Component.translatable(config.colorTranslationKey())),
             right(), 64, columnWidth, () -> {
                 int index = -1;
+
                 for (int i = 0; i < Config.COLOR_PALETTE.length; i++) {
                     if (Config.COLOR_PALETTE[i] == config.textColor) {
                         index = i;
                     }
                 }
+
                 config.textColor = Config.COLOR_PALETTE[(index + 1) % Config.COLOR_PALETTE.length];
                 rebuildWidgets();
             });
+
         toggle("shadow", 1, 0, () -> config.textShadow, v -> config.textShadow = v);
+
         addRenderableWidget(new AbstractSliderButton(right(), 88, columnWidth, 20,
             option("scale", Component.literal(String.format(Locale.ROOT, "%.2f", config.textScale))),
             (config.textScale - 0.1) / 0.9) {
@@ -139,9 +156,11 @@ public class ConfigScreen extends Screen {
 
     private void types() {
         TreeSet<String> ids = new TreeSet<>();
+
         BuiltInRegistries.MENU.keySet().forEach(id -> ids.add(id.toString()));
         ids.add("net.minecraft.world.inventory.HorseInventoryMenu");
         ids.addAll(config.disabledMenuTypes);
+
         if (parent instanceof AbstractContainerScreen<?> inventory) {
             ids.add(SlotVisibility.menuType(inventory));
         }
@@ -156,7 +175,9 @@ public class ConfigScreen extends Screen {
 
         List<String> entries = new ArrayList<>(ids);
         int pageSize = rows(64) * 2;
+
         paginate(entries.size(), pageSize);
+
         for (int i = page * pageSize; i < Math.min(entries.size(), (page + 1) * pageSize); i++) {
             String id = entries.get(i);
             int position = i - page * pageSize;
@@ -172,6 +193,7 @@ public class ConfigScreen extends Screen {
                     config.toggleMenuType(id);
                     rebuildWidgets();
                 });
+
             entry.setTooltip(Tooltip.create(name.copy().append("\n" + id + "\n")
                 .append(Component.translatable("inventory_slots.types.tooltip"))));
         }
@@ -185,6 +207,7 @@ public class ConfigScreen extends Screen {
                     rebuildWidgets();
                 }
             });
+
         if (parent instanceof AbstractContainerScreen<?> inventory) {
             boolean allowed = !config.excludedScreens.contains(new Config.ScreenRule(
                 SlotVisibility.menuType(inventory), parent.getTitle().getString()));
@@ -197,7 +220,9 @@ public class ConfigScreen extends Screen {
 
         List<Config.ScreenRule> entries = new ArrayList<>(config.excludedScreens);
         int pageSize = rows(92);
+
         paginate(entries.size(), pageSize);
+
         for (int i = page * pageSize; i < Math.min(entries.size(), (page + 1) * pageSize); i++) {
             Config.ScreenRule rule = entries.get(i);
             button(Component.translatable("inventory_slots.remove_exclusion", rule.title()),
@@ -219,10 +244,12 @@ public class ConfigScreen extends Screen {
     private void paginate(int count, int pageSize) {
         int pages = Math.max(1, (count + pageSize - 1) / pageSize);
         page = Math.min(page, pages - 1);
+
         button(Component.literal("<"), left, height - 54, 40, () -> {
             page--;
             rebuildWidgets();
         }).active = page > 0;
+
         button(Component.literal(">"), left + contentWidth - 40, height - 54, 40, () -> {
             page++;
             rebuildWidgets();
@@ -265,19 +292,24 @@ public class ConfigScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
+
         graphics.centeredText(font, title, width / 2, 15, 0xFFFFFFFF);
+
         if (tab == 1) {
             int y = 134;
             graphics.centeredText(font, Component.translatable("inventory_slots.preview"), width / 2, y - 14,
                 0xFFFFFFFF);
+
             for (int i = 0; i < 6; i++) {
                 int x = width / 2 - 29 + (i % 3) * 20;
                 int slotY = y + i / 3 * 20;
+
                 graphics.fill(x, slotY, x + 18, slotY + 18, 0xFF8B8B8B);
                 graphics.fill(x + 1, slotY + 1, x + 17, slotY + 17, 0xFF373737);
                 SlotLabelRenderer.draw(graphics, font, String.valueOf(i), x + 1, slotY + 1, 16, 16);
             }
         }
+
         if (tab == 2 || tab == 3) {
             graphics.centeredText(font, Component.translatable("inventory_slots.page", page + 1),
                 width / 2, height - 48, 0xFFAAAAAA);
