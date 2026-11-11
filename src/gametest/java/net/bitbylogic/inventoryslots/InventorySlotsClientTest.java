@@ -47,7 +47,7 @@ public class InventorySlotsClientTest implements FabricClientGameTest {
             assertVisibleSlots(context, 63);
 
             context.runOnClient(client -> {
-                InventorySlotsClient.Action.SCREEN.key.setKey(InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_F8));
+                InventorySlotsClient.Action.SCREEN.key.setKey(InputConstants.Type.KEYSYM.getOrCreate(InputConstants.KEY_F8));
                 KeyMapping.resetMapping();
             });
             context.getInput().pressKey(InputConstants.KEY_F8);
@@ -99,7 +99,7 @@ public class InventorySlotsClientTest implements FabricClientGameTest {
             context.takeScreenshot("hidden-creative-inventory");
             context.runOnClient(client -> Config.INSTANCE.creativeInventory = true);
             context.runOnClient(client -> {
-                var screen = (AbstractContainerScreen<?>) client.gui.screen();
+                var screen = (AbstractContainerScreen<?>) client.screen;
                 check(screen.getMenu().slots.stream().anyMatch(slot -> SlotVisibility.shouldShow(screen, slot)),
                         "Creative inventory did not enable");
             });
@@ -115,7 +115,7 @@ public class InventorySlotsClientTest implements FabricClientGameTest {
 
     private static void assertVisibleSlots(ClientGameTestContext context, long expected) {
         context.runOnClient(client -> {
-            var screen = (AbstractContainerScreen<?>) client.gui.screen();
+            var screen = (AbstractContainerScreen<?>) client.screen;
             long actual = screen.getMenu().slots.stream().filter(slot -> SlotVisibility.shouldShow(screen, slot)).count();
             check(actual == expected, screen.getClass().getSimpleName() + ": expected " + expected + " slots, got " + actual);
         });

@@ -50,7 +50,7 @@ public class InventorySlotsClient implements ClientModInitializer {
 
         Action(String name, int defaultKey) {
             key = KeyMappingHelper.registerKeyMapping(new KeyMapping(
-                "key.inventory_slots." + name, InputConstants.Type.KEYBOARD, defaultKey, CATEGORY));
+                "key.inventory_slots." + name, InputConstants.Type.KEYSYM, defaultKey, CATEGORY));
         }
     }
 
@@ -74,7 +74,7 @@ public class InventorySlotsClient implements ClientModInitializer {
                 boolean pressed = clicked && !action.down;
                 action.down = action.key.isDown();
 
-                if (client.gui.screen() != null || !pressed) {
+                if (client.screen != null || !pressed) {
                     continue;
                 }
 
@@ -149,7 +149,7 @@ public class InventorySlotsClient implements ClientModInitializer {
         Config config = Config.INSTANCE;
 
         if (action == Action.CONFIG) {
-            client.setScreenAndShow(new ConfigScreen(screen));
+            client.setScreen(new ConfigScreen(screen));
             return;
         }
 

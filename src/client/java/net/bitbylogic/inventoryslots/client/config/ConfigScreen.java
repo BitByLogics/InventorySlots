@@ -78,7 +78,7 @@ public class ConfigScreen extends Screen {
 
         button(Component.translatable("inventory_slots.keybinds"), left + footerWidth + 6,
             height - 26, footerWidth,
-            () -> minecraft.setScreenAndShow(new KeyBindsScreen(this, minecraft.options)));
+            () -> minecraft.setScreen(new KeyBindsScreen(this, minecraft.options)));
 
         button(Component.translatable("gui.done"), left + 2 * (footerWidth + 6),
             height - 26, footerWidth, this::onClose);
@@ -328,6 +328,6 @@ public class ConfigScreen extends Screen {
     @Override
     public void onClose() {
         config.save();
-        minecraft.setScreenAndShow(parent);
+        minecraft.setScreen(parent);
     }
 }
