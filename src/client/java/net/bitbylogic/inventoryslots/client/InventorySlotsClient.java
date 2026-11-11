@@ -19,6 +19,7 @@ import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -29,8 +30,8 @@ public class InventorySlotsClient implements ClientModInitializer {
         Identifier.parse("inventory_slots:general"));
 
     public enum Action {
-        CONFIG("config", InputConstants.KEY_END),
-        TOGGLE("toggle_slots", InputConstants.KEY_HOME),
+        CONFIG("config", GLFW.GLFW_KEY_END),
+        TOGGLE("toggle_slots", GLFW.GLFW_KEY_HOME),
         CONTAINERS("toggle_containers"),
         PLAYER("toggle_player"),
         PLAYER_HOTBAR("toggle_player_hotbar"),
@@ -50,7 +51,7 @@ public class InventorySlotsClient implements ClientModInitializer {
 
         Action(String name, int defaultKey) {
             key = KeyMappingHelper.registerKeyMapping(new KeyMapping(
-                "key.inventory_slots." + name, InputConstants.Type.KEYBOARD, defaultKey, CATEGORY));
+                "key.inventory_slots." + name, InputConstants.Type.KEYSYM, defaultKey, CATEGORY));
         }
     }
 
