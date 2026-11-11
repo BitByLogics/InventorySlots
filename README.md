@@ -31,20 +31,27 @@ The mod provides a real-time overlay on any container GUI. Settings can be adjus
 ---
 
 ### Configuration
-You can access the settings via Mod Menu or the assigned hotkey. The following properties are configurable:
+Press **END** to open the settings, including from an open inventory. The settings have four tabs:
 
-* **Enabled:** Toggle the overlay globally.
-* **Scale:** Adjust the size of the slot index text.
-* **Color:** Change text color via hex input or slider.
-* **Anchor:** Define where the text sits within the slot.
-* **Shadow:** Toggle the standard Minecraft text shadow.
+* **Visibility:** Master switch, a **Containers only** preset, and separate switches for container slots, your own inventory, creative inventory, the player rows and hotbar beneath containers, HUD hotbar numbers and widget numbers.
+* **Appearance:** Text scale, color, anchor and shadow, with a live preview.
+* **Inventories:** Turn slot numbers on or off for a whole inventory type (chests, furnaces, workstations, modded inventories).
+* **Excluded menus:** Exclude a specific menu title, useful for server menus that look like chests.
+
+Filters hide labels without renumbering: numbers are always the real slot IDs, starting at zero.
 
 ---
 
 ### Keybinds
 * **HOME:** Toggle overlays
 * **END:** Open configuration menu
-*Keybinds can be changed in the standard Minecraft controls menu.*
+
+Extra actions (container slots, player rows, HUD numbers, widget numbers, current menu title, current inventory type) start unbound. Assign them under Options > Controls > Key Binds > Inventory Slots. They also work while an inventory is open.
+
+---
+
+### Compatibility
+This branch targets the latest Minecraft version (Java 25) with Fabric Loader and [Fabric API](https://modrinth.com/mod/fabric-api). Older Minecraft versions live on their own branches (`1.21.11`, `26.1.2`, `26.2`, `26.3`).
 
 ---
 
