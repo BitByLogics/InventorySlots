@@ -113,7 +113,7 @@ The two current-menu shortcuts require an open inventory. They toggle an exclusi
 
 ## 🧩 Compatibility
 
-- This branch: Minecraft **26.3**, Java **25**
+- This branch: Minecraft **26.1.2**, Java **25**
 - Loader: **Fabric**
 - Required Mods: [Fabric API](https://modrinth.com/mod/fabric-api)
 
@@ -128,7 +128,7 @@ The two current-menu shortcuts require an open inventory. They toggle an exclusi
 
 The build runs configuration, migration and visibility unit tests. Client game tests launch an isolated Minecraft instance to check real chest/furnace/player/creative slots, inventory hotkeys, the configuration tabs, and returning to an inventory. Screenshots are written to `build/run/clientGameTest/screenshots`. Test code is not included in the release JAR.
 
-The installable file is `build/libs/inventoryslots-2.2.0+26.3.jar` (the `-sources.jar` is for development).
+The installable file is `build/libs/inventoryslots-2.2.0+26.1.2.jar` (the `-sources.jar` is for development).
 
 ---
 
